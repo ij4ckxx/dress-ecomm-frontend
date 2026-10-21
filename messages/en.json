@@ -1,0 +1,13 @@
+{
+  "HomePage": {
+    "title": "Welcome to our Store",
+    "description": "Discover our curated collection of styles."
+  },
+  "Common": {
+    "search": "Search",
+    "cart": "Cart",
+    "account": "Account",
+    "login": "Login",
+    "register": "Register"
+  }
+}
