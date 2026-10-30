@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { getHomepageData } from "@/lib/api/homepage.api";
 import {
   HeroBanner,
-  TrustPillarsBanner,
   CategoryPillsNav,
   FeaturedCollections,
   CampaignStory,
@@ -12,6 +11,7 @@ import {
   PressTestimonials,
   JournalPreview,
   InstagramCommunity,
+  TrustPillarsBanner,
 } from "@/components/home";
 
 export const metadata: Metadata = {
@@ -33,32 +33,32 @@ export default async function HomePage() {
       {/* 1. Cinematic Hero Banner Carousel */}
       <HeroBanner slides={homepageData.heroSlides} />
 
-      {/* 2. Trust Pillars & Artisanal Guarantees Strip */}
-      <TrustPillarsBanner />
-
-      {/* 3. Explore By Silhouette / Category Quick Navigation */}
+      {/* 2. The Silhouette Edit / Architectural Category Grid */}
       <CategoryPillsNav categories={homepageData.categoryPills} />
 
-      {/* 4. Signature Curation & Interactive Tabbed Product Grid */}
+      {/* 3. Signature Curation & Interactive Tabbed Product Grid */}
       <FeaturedCollections products={homepageData.featuredProducts} />
 
-      {/* 5. Maison Ethos & Ancient Loom Artisanal Campaign Story */}
+      {/* 4. Maison Ethos & Ancient Loom Artisanal Campaign Story */}
       <CampaignStory />
 
-      {/* 6. Interactive "Shop The Look" Styled Ensemble Spotlight */}
+      {/* 5. Interactive "Shop The Look" Styled Ensemble Spotlight */}
       <ShopTheLook ensemble={homepageData.lookbook} />
 
-      {/* 7. Most Coveted Heirlooms Bestseller Drag Slider */}
+      {/* 6. Most Coveted Heirlooms Bestseller Drag Slider */}
       <BestsellerSlider products={homepageData.bestsellers} />
 
-      {/* 8. As Celebrated In Vogue & Luxury Press Accolades */}
+      {/* 7. As Celebrated In Vogue & Luxury Press Accolades */}
       <PressTestimonials quotes={homepageData.pressQuotes} />
 
-      {/* 9. The Maison Journal: Textile Care & Styling Narratives */}
+      {/* 8. The Maison Journal: Textile Care & Styling Narratives */}
       <JournalPreview articles={homepageData.journalArticles} />
 
-      {/* 10. Community & Patrons Instagram Showcase */}
+      {/* 9. Community & Patrons Instagram Showcase */}
       <InstagramCommunity posts={homepageData.instagramFeed} />
+
+      {/* 10. Understated Artisanal Commitments Strip */}
+      <TrustPillarsBanner />
     </div>
   );
 }

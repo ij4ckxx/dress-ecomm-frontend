@@ -47,10 +47,10 @@ export const HeaderTopBar: React.FC<HeaderTopBarProps> = ({
         {/* Brand Logo */}
         <Link
           href="/"
-          className="inline-flex items-center shrink-0 focus:outline-none focus:ring-1 focus:ring-accent rounded-sm"
-          aria-label="Home"
+          className="inline-flex items-center shrink-0 focus:outline-none focus:ring-1 focus:ring-accent rounded-sm py-1 transition-transform hover:scale-[1.02]"
+          aria-label="Saayal Stories Home"
         >
-          <Logo variant="default" height={42} priority />
+          <Logo variant="default" height={54} priority />
         </Link>
 
         {/* Centralized Search Bar (Desktop & Tablet) */}

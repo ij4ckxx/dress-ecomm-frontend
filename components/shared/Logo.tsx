@@ -44,8 +44,8 @@ export const Logo: React.FC<LogoProps> = ({
     );
   }
 
-  // Exact aspect ratio of the bold calligraphy emblem: 850 / 388 ≈ 2.19
-  const calcWidth = width || Math.round(height * 2.19);
+  // Exact aspect ratio of the bold calligraphy emblem: 855 / 423 ≈ 2.02
+  const calcWidth = width || Math.round(height * 2.02);
 
   let src = "/logo.png";
   if (variant === "white") {

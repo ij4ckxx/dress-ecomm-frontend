@@ -1,22 +1,29 @@
 import React from "react";
+import Link from "next/link";
+import { Logo } from "@/components/shared/Logo";
 import { PAYMENT_BADGES } from "./constants";
 
 /**
- * Bottom sub-bar rendering the copyright notice and payment method badges.
+ * Bottom sub-bar rendering the brand emblem, copyright notice and payment method badges.
  */
 export const FooterBottom: React.FC = () => {
   const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "Saayal Stories";
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className="mt-8 pt-6 border-t border-white/10 flex flex-col items-center justify-center text-center gap-3">
+    <div className="mt-10 pt-8 border-t border-white/10 flex flex-col items-center justify-center text-center gap-4">
+      {/* Brand Emblem in White */}
+      <Link href="/" className="inline-block transition-transform hover:scale-105" aria-label="Saayal Stories Home">
+        <Logo variant="white" height={44} />
+      </Link>
+
       {/* Copyright Notice */}
-      <p className="text-xs text-white/70 tracking-wide">
-        © {currentYear} {storeName}. All Rights Reserved
+      <p className="text-xs text-white/70 tracking-wide font-sans">
+        © {currentYear} {storeName}. All Rights Reserved. Crafted for the Modern Silhouette.
       </p>
 
       {/* Payment & Security Badges Row */}
-      <div className="flex flex-wrap items-center justify-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
         {PAYMENT_BADGES.map((badge) => (
           <div
             key={badge.code}
@@ -66,3 +73,4 @@ export const FooterBottom: React.FC = () => {
   );
 };
 
+export default FooterBottom;
