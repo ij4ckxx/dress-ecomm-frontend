@@ -1,26 +1,110 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand Palette from Image */
+  --primary: #754b4d;          /* Plum Wine */
+  --primary-hover: #5e393b;
+  --primary-contrast: #ffffff;
+
+  --accent: #a86a65;           /* Copper Rose */
+  --accent-hover: #925651;
+
+  --secondary: #ab8882;        /* Dusty Rose */
+  --muted: #d8a694;            /* Rosewater */
+
+  --surface-tint: #e0cbb9;     /* China Doll */
+  --surface-soft: #fcf9f7;
+  --surface-card: #ffffff;
+
+  --border: #e6d8ce;
+
+  --text-main: #241718;
+  --text-secondary: #634f4e;
+  --text-subtle: #8f7978;
+
+  --error: #b91c1c;
+  --error-bg: #fef2f2;
+  --error-border: #fecaca;
+
+  --success: #15803d;
+  --success-bg: #f0fdf4;
+  --success-border: #bbf7d0;
+
+  --background: #faf8f5;
+  --foreground: var(--text-main);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-contrast: var(--primary-contrast);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+
+  --color-surface-tint: var(--surface-tint);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-card: var(--surface-card);
+
+  --color-border: var(--border);
+
+  --color-text-main: var(--text-main);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-subtle: var(--text-subtle);
+
+  --color-error: var(--error);
+  --color-error-bg: var(--error-bg);
+  --color-error-border: var(--error-border);
+
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-success-border: var(--success-border);
+
+  --font-serif: "Playfair Display", Georgia, serif;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Accessible focus visible utility */
+.focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: box-shadow 0.15s ease-in-out;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(168, 106, 101, 0.25);
+}
+
+/* Skeleton shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(224, 203, 185, 0.35) 25%,
+    rgba(224, 203, 185, 0.65) 50%,
+    rgba(224, 203, 185, 0.35) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
 }
