@@ -255,7 +255,7 @@ export const requestPasswordReset = async (
  * Resets user password using the verification token sent via email.
  */
 export const resetPasswordWithToken = async (
-  payload: ResetPasswordInput
+  payload: { email: string; token: string; newPassword: string }
 ): Promise<string> => {
   const baseUrl = getBackendBaseUrl();
   const response = await fetch(`${baseUrl}/auth/reset-password`, {
@@ -263,7 +263,11 @@ export const resetPasswordWithToken = async (
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      email: payload.email,
+      token: payload.token,
+      newPassword: payload.newPassword,
+    }),
     cache: "no-store",
   });
 

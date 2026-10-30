@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
@@ -7,19 +7,23 @@ import { getMessages } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const cormorant = Cormorant_Garamond({
+  variable: "--font-serif",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const dmSans = DM_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Dress Ecommerce",
-  description: "Luxury Apparel & Designer Fashion",
+  title: "VANYA | Luxury Indian Ethnic Wear & Designer Dresses",
+  description: "Exquisite handcrafted sarees, bridal lehengas, silk suits, and contemporary luxury dresses.",
 };
 
 export function generateStaticParams() {
@@ -37,21 +41,19 @@ export default async function RootLayout({
 }: LocaleLayoutProps) {
   const { locale } = await params;
 
-  // Validate that incoming `locale` is supported
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
 
-  // Passing `{ locale }` avoids headers() lookup
   const messages = await getMessages({ locale });
 
   return (
     <html
       lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${cormorant.variable} ${dmSans.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-background text-foreground font-sans" suppressHydrationWarning>
         <Suspense fallback={null}>
           <NextIntlClientProvider messages={messages}>
             {children}

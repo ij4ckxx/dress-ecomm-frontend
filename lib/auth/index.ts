@@ -1,4 +1,6 @@
 import NextAuth from "next-auth";
+import { getToken } from "next-auth/jwt";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { authConfig } from "./auth.config";
 import { SafeUser, UserRole } from "./types";
@@ -16,6 +18,26 @@ export const getCurrentUser = async (): Promise<SafeUser | null> => {
     return null;
   }
   return session.user as unknown as SafeUser;
+};
+
+/**
+ * Server-only helper to safely retrieve the backend access token for API communications.
+ * Never exposed to client-side bundles.
+ */
+export const getServerAccessToken = async (): Promise<string | null> => {
+  const reqCookies = await cookies();
+  const reqHeaders = await headers();
+
+  const token = await getToken({
+    req: {
+      headers: Object.fromEntries(reqHeaders.entries()),
+      cookies: Object.fromEntries(reqCookies.getAll().map((c) => [c.name, c.value])),
+    } as unknown as Request,
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  });
+
+  const backendTokens = token?.backendTokens as { accessToken?: string } | undefined;
+  return backendTokens?.accessToken || null;
 };
 
 /**
@@ -62,4 +84,3 @@ export const logoutServerSession = async (refreshToken?: string): Promise<void> 
   }
   await signOut({ redirect: false });
 };
-

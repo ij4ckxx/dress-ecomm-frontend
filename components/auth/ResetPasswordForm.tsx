@@ -11,13 +11,15 @@ export interface ResetPasswordFormProps {
 }
 
 /**
- * Accessible reset-password form allowing users to finalize password recovery with a token.
+ * Accessible reset-password form allowing users to finalize password recovery with a token,
+ * password confirmation, and luxury styling.
  */
 export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
   initialEmail = "",
   initialToken = "",
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [state, formAction, isPending] = useActionState<ActionState | null, FormData>(
     resetPasswordAction,
@@ -85,7 +87,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
         <div>
           <label
             htmlFor="reset-email"
-            className="block text-sm font-medium text-text-main mb-1"
+            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
           >
             Email Address <span className="text-error" aria-hidden="true">*</span>
           </label>
@@ -99,9 +101,9 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
             aria-required="true"
             aria-invalid={Boolean(state?.errors?.email)}
             aria-describedby={state?.errors?.email ? "reset-email-error" : undefined}
-            placeholder="you@example.com"
+            placeholder="name@example.com"
             disabled={isPending}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
           />
           {state?.errors?.email && (
             <p id="reset-email-error" role="alert" className="mt-1 text-xs text-error font-medium">
@@ -114,7 +116,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
         <div>
           <label
             htmlFor="reset-token"
-            className="block text-sm font-medium text-text-main mb-1"
+            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
           >
             Reset Verification Token <span className="text-error" aria-hidden="true">*</span>
           </label>
@@ -127,9 +129,9 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
             aria-required="true"
             aria-invalid={Boolean(state?.errors?.token)}
             aria-describedby={state?.errors?.token ? "reset-token-error" : undefined}
-            placeholder="Paste code from email"
+            placeholder="Paste verification token from email"
             disabled={isPending}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring font-mono transition-colors disabled:opacity-50"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring font-mono transition-colors disabled:opacity-50"
           />
           {state?.errors?.token && (
             <p id="reset-token-error" role="alert" className="mt-1 text-xs text-error font-medium">
@@ -142,7 +144,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
         <div>
           <label
             htmlFor="reset-new-password"
-            className="block text-sm font-medium text-text-main mb-1"
+            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
           >
             New Password <span className="text-error" aria-hidden="true">*</span>
           </label>
@@ -158,13 +160,13 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
               aria-describedby="reset-password-hint reset-new-password-error"
               placeholder="••••••••"
               disabled={isPending}
-              className="w-full px-3.5 py-2.5 pr-11 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
+              className="w-full px-4 py-2.5 pr-11 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
             />
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-subtle hover:text-text-main focus-ring rounded-lg my-1"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-text-subtle hover:text-text-main focus-ring rounded-lg my-1"
             >
               {showPassword ? (
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -179,11 +181,58 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
             </button>
           </div>
           <p id="reset-password-hint" className="mt-1 text-xs text-text-subtle">
-            At least 8 characters, with letters and numbers.
+            At least 8 characters, containing letters and numbers.
           </p>
           {state?.errors?.newPassword && (
             <p id="reset-new-password-error" role="alert" className="mt-1 text-xs text-error font-medium">
               {state.errors.newPassword[0]}
+            </p>
+          )}
+        </div>
+
+        {/* Confirm New Password */}
+        <div>
+          <label
+            htmlFor="reset-confirm-password"
+            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
+          >
+            Confirm New Password <span className="text-error" aria-hidden="true">*</span>
+          </label>
+          <div className="relative">
+            <input
+              id="reset-confirm-password"
+              name="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              autoComplete="new-password"
+              required
+              aria-required="true"
+              aria-invalid={Boolean(state?.errors?.confirmPassword)}
+              aria-describedby={state?.errors?.confirmPassword ? "reset-confirm-password-error" : undefined}
+              placeholder="••••••••"
+              disabled={isPending}
+              className="w-full px-4 py-2.5 pr-11 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-text-subtle hover:text-text-main focus-ring rounded-lg my-1"
+            >
+              {showConfirmPassword ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              )}
+            </button>
+          </div>
+          {state?.errors?.confirmPassword && (
+            <p id="reset-confirm-password-error" role="alert" className="mt-1 text-xs text-error font-medium">
+              {state.errors.confirmPassword[0]}
             </p>
           )}
         </div>
@@ -193,7 +242,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
           type="submit"
           disabled={isPending}
           aria-busy={isPending}
-          className="w-full mt-2 py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-sm tracking-wide transition-all shadow-sm focus-ring disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full mt-2 py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-xs uppercase tracking-widest transition-all shadow-sm focus-ring disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isPending ? (
             <>

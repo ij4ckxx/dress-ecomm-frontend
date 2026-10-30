@@ -33,28 +33,34 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 /**
- * Validation schema for customer registration.
+ * Validation schema for customer registration with password confirmation.
  */
-export const registerSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, { message: "Name must be at least 2 characters long" })
-    .max(100, { message: "Name cannot exceed 100 characters" }),
-  email: emailSchema,
-  password: passwordSchema,
-  phone: z
-    .string()
-    .trim()
-    .optional()
-    .or(z.literal("")),
-  avatarUrl: z
-    .string()
-    .trim()
-    .url({ message: "Avatar must be a valid URL" })
-    .optional()
-    .or(z.literal("")),
-});
+export const registerSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, { message: "Name must be at least 2 characters long" })
+      .max(100, { message: "Name cannot exceed 100 characters" }),
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, { message: "Please confirm your password" }),
+    phone: z
+      .string()
+      .trim()
+      .optional()
+      .or(z.literal("")),
+    avatarUrl: z
+      .string()
+      .trim()
+      .url({ message: "Avatar must be a valid URL" })
+      .optional()
+      .or(z.literal("")),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 
@@ -70,13 +76,19 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 /**
  * Validation schema for confirming password reset with token.
  */
-export const resetPasswordSchema = z.object({
-  email: emailSchema,
-  token: z
-    .string()
-    .trim()
-    .min(10, { message: "A valid reset token is required" }),
-  newPassword: passwordSchema,
-});
+export const resetPasswordSchema = z
+  .object({
+    email: emailSchema,
+    token: z
+      .string()
+      .trim()
+      .min(10, { message: "A valid reset token is required" }),
+    newPassword: passwordSchema,
+    confirmPassword: z.string().min(1, { message: "Please confirm your new password" }),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

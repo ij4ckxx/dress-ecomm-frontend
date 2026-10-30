@@ -87,6 +87,7 @@ export const registerAction = async (
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
     phone: formData.get("phone") || undefined,
   };
 
@@ -159,6 +160,7 @@ export const resetPasswordAction = async (
     email: formData.get("email"),
     token: formData.get("token"),
     newPassword: formData.get("newPassword"),
+    confirmPassword: formData.get("confirmPassword"),
   };
 
   const parsed = resetPasswordSchema.safeParse(rawData);
@@ -171,7 +173,11 @@ export const resetPasswordAction = async (
   }
 
   try {
-    const message = await resetPasswordWithToken(parsed.data);
+    const message = await resetPasswordWithToken({
+      email: parsed.data.email,
+      token: parsed.data.token,
+      newPassword: parsed.data.newPassword,
+    });
     return {
       success: true,
       message,
@@ -197,4 +203,3 @@ export const logoutAction = async (): Promise<void> => {
 export const initiateGoogleSignInAction = async (): Promise<void> => {
   await signIn("google", { redirectTo: "/account/profile" });
 };
-

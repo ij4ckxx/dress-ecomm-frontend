@@ -11,10 +11,12 @@ export interface RegisterFormProps {
 }
 
 /**
- * Production-ready accessible registration form validating user credentials.
+ * Production-ready accessible registration form validating user credentials
+ * with luxury boutique aesthetic and password confirmation.
  */
 export const RegisterForm: React.FC<RegisterFormProps> = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [state, formAction, isPending] = useActionState<ActionState | null, FormData>(
     registerAction,
@@ -82,7 +84,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
         <div>
           <label
             htmlFor="register-name"
-            className="block text-sm font-medium text-text-main mb-1"
+            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
           >
             Full Name <span className="text-error" aria-hidden="true">*</span>
           </label>
@@ -97,7 +99,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
             aria-describedby={state?.errors?.name ? "register-name-error" : undefined}
             placeholder="Jane Doe"
             disabled={isPending}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
           />
           {state?.errors?.name && (
             <p id="register-name-error" role="alert" className="mt-1 text-xs text-error font-medium">
@@ -110,7 +112,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
         <div>
           <label
             htmlFor="register-email"
-            className="block text-sm font-medium text-text-main mb-1"
+            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
           >
             Email Address <span className="text-error" aria-hidden="true">*</span>
           </label>
@@ -123,9 +125,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
             aria-required="true"
             aria-invalid={Boolean(state?.errors?.email)}
             aria-describedby={state?.errors?.email ? "register-email-error" : undefined}
-            placeholder="jane@example.com"
+            placeholder="name@example.com"
             disabled={isPending}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
           />
           {state?.errors?.email && (
             <p id="register-email-error" role="alert" className="mt-1 text-xs text-error font-medium">
@@ -138,18 +140,18 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
         <div>
           <label
             htmlFor="register-phone"
-            className="block text-sm font-medium text-text-main mb-1"
+            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
           >
-            Phone Number <span className="text-xs text-text-subtle">(Optional)</span>
+            Phone Number <span className="text-[10px] text-text-subtle normal-case font-normal">(Optional for delivery updates)</span>
           </label>
           <input
             id="register-phone"
             name="phone"
             type="tel"
             autoComplete="tel"
-            placeholder="+1 234 567 8900"
+            placeholder="+91 98765 43210"
             disabled={isPending}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
           />
         </div>
 
@@ -157,7 +159,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
         <div>
           <label
             htmlFor="register-password"
-            className="block text-sm font-medium text-text-main mb-1"
+            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
           >
             Password <span className="text-error" aria-hidden="true">*</span>
           </label>
@@ -173,13 +175,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
               aria-describedby="register-password-hint register-password-error"
               placeholder="••••••••"
               disabled={isPending}
-              className="w-full px-3.5 py-2.5 pr-11 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
+              className="w-full px-4 py-2.5 pr-11 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
             />
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-subtle hover:text-text-main focus-ring rounded-lg my-1"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-text-subtle hover:text-text-main focus-ring rounded-lg my-1"
             >
               {showPassword ? (
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -194,11 +196,58 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
             </button>
           </div>
           <p id="register-password-hint" className="mt-1 text-xs text-text-subtle">
-            At least 8 characters, with letters and numbers.
+            At least 8 characters, containing both letters and numbers.
           </p>
           {state?.errors?.password && (
             <p id="register-password-error" role="alert" className="mt-1 text-xs text-error font-medium">
               {state.errors.password[0]}
+            </p>
+          )}
+        </div>
+
+        {/* Confirm Password */}
+        <div>
+          <label
+            htmlFor="register-confirm-password"
+            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
+          >
+            Confirm Password <span className="text-error" aria-hidden="true">*</span>
+          </label>
+          <div className="relative">
+            <input
+              id="register-confirm-password"
+              name="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              autoComplete="new-password"
+              required
+              aria-required="true"
+              aria-invalid={Boolean(state?.errors?.confirmPassword)}
+              aria-describedby={state?.errors?.confirmPassword ? "register-confirm-error" : undefined}
+              placeholder="••••••••"
+              disabled={isPending}
+              className="w-full px-4 py-2.5 pr-11 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-text-subtle hover:text-text-main focus-ring rounded-lg my-1"
+            >
+              {showConfirmPassword ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              )}
+            </button>
+          </div>
+          {state?.errors?.confirmPassword && (
+            <p id="register-confirm-error" role="alert" className="mt-1 text-xs text-error font-medium">
+              {state.errors.confirmPassword[0]}
             </p>
           )}
         </div>
@@ -208,7 +257,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
           type="submit"
           disabled={isPending}
           aria-busy={isPending}
-          className="w-full mt-2 py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-sm tracking-wide transition-all shadow-sm focus-ring disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full mt-2 py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-xs uppercase tracking-widest transition-all shadow-sm focus-ring disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isPending ? (
             <>

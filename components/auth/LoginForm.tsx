@@ -12,7 +12,8 @@ export interface LoginFormProps {
 }
 
 /**
- * Production-ready accessible credentials login form with live error announcements.
+ * Production-ready accessible credentials login form with live error announcements
+ * and boutique luxury styling.
  */
 export const LoginForm: React.FC<LoginFormProps> = ({
   redirectUrl = "/account/profile",
@@ -67,7 +68,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <div>
           <label
             htmlFor="login-email"
-            className="block text-sm font-medium text-text-main mb-1.5"
+            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
           >
             Email Address <span className="text-error" aria-hidden="true">*</span>
           </label>
@@ -80,9 +81,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             aria-required="true"
             aria-invalid={Boolean(state?.errors?.email)}
             aria-describedby={state?.errors?.email ? "login-email-error" : undefined}
-            placeholder="you@example.com"
+            placeholder="name@example.com"
             disabled={isPending}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
           />
           {state?.errors?.email && (
             <p
@@ -97,20 +98,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
         {/* Password Field */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label
-              htmlFor="login-password"
-              className="block text-sm font-medium text-text-main"
-            >
-              Password <span className="text-error" aria-hidden="true">*</span>
-            </label>
-            <Link
-              href="/forgot-password"
-              className="text-xs text-accent hover:text-accent-hover font-medium underline underline-offset-2 transition-colors focus-ring rounded"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          <label
+            htmlFor="login-password"
+            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
+          >
+            Password <span className="text-error" aria-hidden="true">*</span>
+          </label>
           <div className="relative">
             <input
               id="login-password"
@@ -123,13 +116,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               aria-describedby={state?.errors?.password ? "login-password-error" : undefined}
               placeholder="••••••••"
               disabled={isPending}
-              className="w-full px-3.5 py-2.5 pr-11 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
+              className="w-full px-4 py-2.5 pr-11 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
             />
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-subtle hover:text-text-main focus-ring rounded-lg my-1"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-text-subtle hover:text-text-main focus-ring rounded-lg my-1"
             >
               {showPassword ? (
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,12 +162,30 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           )}
         </div>
 
+        {/* Remember me & Forgot Password links */}
+        <div className="flex items-center justify-between text-xs pt-1">
+          <label className="flex items-center gap-2 cursor-pointer text-text-secondary select-none">
+            <input
+              type="checkbox"
+              name="remember"
+              className="w-4 h-4 rounded border-border text-primary accent-primary focus:ring-accent"
+            />
+            <span>Remember me</span>
+          </label>
+          <Link
+            href="/forgot-password"
+            className="text-accent hover:text-accent-hover font-medium underline underline-offset-2 transition-colors focus-ring rounded"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
         {/* Submit Button */}
         <button
           type="submit"
           disabled={isPending}
           aria-busy={isPending}
-          className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-sm tracking-wide transition-all shadow-sm focus-ring disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-xs uppercase tracking-widest transition-all shadow-sm focus-ring disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isPending ? (
             <>
@@ -198,10 +209,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              <span>Signing in...</span>
+              <span>Authenticating...</span>
             </>
           ) : (
-            <span>Sign In</span>
+            <span>Sign In to Account</span>
           )}
         </button>
       </form>
