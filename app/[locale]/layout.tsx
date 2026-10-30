@@ -21,9 +21,25 @@ const dmSans = DM_Sans({
   display: "swap",
 });
 
+const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "SAAYAL STORIES";
+const storeTagline = process.env.NEXT_PUBLIC_STORE_TAGLINE || "Haute Couture & Heritage Weaves";
+
 export const metadata: Metadata = {
-  title: "VANYA | Luxury Indian Ethnic Wear & Designer Dresses",
+  title: {
+    default: `${storeName} | ${storeTagline}`,
+    template: `%s | ${storeName}`,
+  },
   description: "Exquisite handcrafted sarees, bridal lehengas, silk suits, and contemporary luxury dresses.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export function generateStaticParams() {

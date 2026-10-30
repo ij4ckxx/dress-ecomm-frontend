@@ -1,5 +1,7 @@
 import React from "react";
+import Link from "next/link";
 import { GsapFadeIn } from "@/components/shared/GsapFadeIn";
+import { Logo } from "@/components/shared/Logo";
 
 export interface AuthCardProps {
   title: string;
@@ -10,7 +12,7 @@ export interface AuthCardProps {
 
 /**
  * Accessible luxury card container for authentication forms inspired by high-end ecommerce designs
- * with smooth GSAP entrance animation.
+ * with smooth GSAP entrance animation and branded calligraphy emblem.
  */
 export const AuthCard: React.FC<AuthCardProps> = ({
   title,
@@ -25,9 +27,16 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           aria-labelledby="auth-card-title"
           className="bg-surface-card border border-border rounded-2xl shadow-sm px-6 py-8 sm:px-10 sm:py-10 transition-all"
         >
-          <header className="text-center mb-8">
+          <header className="text-center mb-7">
+            <Link
+              href="/"
+              className="inline-block mx-auto mb-3 focus-ring rounded-lg transition-transform hover:scale-[1.02]"
+              aria-label="Return to storefront"
+            >
+              <Logo height={44} priority />
+            </Link>
             <span className="text-[10px] uppercase tracking-[0.25em] text-accent font-semibold block mb-1">
-              Maison Account
+              Maison Privé
             </span>
             <h1
               id="auth-card-title"
