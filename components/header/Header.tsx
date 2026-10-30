@@ -8,33 +8,41 @@ import { MobileHeaderNav } from "./MobileHeaderNav";
 
 /**
  * Modern luxury e-commerce header featuring a two-tiered navigation layout:
- * - Top tier: Logo, full-width search bar, Support, Account, and Cart.
- * - Bottom tier: Primary top 5 categories on the left, promotional highlights on the right.
+ * - Top tier: Brand Logo, expanded search bar, Support Concierge, Account, and Bag.
+ * - Bottom tier: Dynamic top 5 categories on the left, promotional highlights on the right,
+ *   with an interactive category mega-menu dropdown.
+ *
+ * @param {HeaderProps} props
+ * @returns {React.ReactElement}
  */
-export const Header: React.FC<HeaderProps> = ({ currentUser = null, className = "" }) => {
+export const Header: React.FC<HeaderProps> = ({
+  currentUser = null,
+  categories,
+  className = "",
+}) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className={`sticky top-0 z-40 w-full transition-shadow ${className}`}>
-      {/* 1. Top Tier: Logo, Search, Actions */}
+      {/* 1. Top Tier: Logo, Full-width Search, Concierge, Account, Cart */}
       <HeaderTopBar
         currentUser={currentUser}
         isMobileMenuOpen={mobileMenuOpen}
         onMobileMenuToggle={() => setMobileMenuOpen((prev) => !prev)}
       />
 
-      {/* 2. Bottom Tier: Categories (Left) & Highlights (Right) */}
-      <HeaderNav />
+      {/* 2. Bottom Tier: First 5 Categories (Left) & Highlights (Right) + Mega Menu */}
+      <HeaderNav categories={categories} />
 
       {/* 3. Mobile Navigation Drawer */}
       <MobileHeaderNav
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         currentUser={currentUser}
+        categories={categories}
       />
     </header>
   );
 };
 
 export default Header;
-

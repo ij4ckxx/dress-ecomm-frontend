@@ -1,27 +1,28 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SafeUser } from "@/lib/auth/types";
-import { PRIMARY_CATEGORIES, NAV_HIGHLIGHTS } from "./constants";
-
-export interface MobileHeaderNavProps {
-  isOpen: boolean;
-  onClose: () => void;
-  currentUser?: SafeUser | null;
-}
+import { MobileHeaderNavProps } from "./types";
+import { NAV_HIGHLIGHTS } from "./constants";
 
 /**
- * Mobile responsive navigation drawer providing access to all primary
- * categories, promotional highlights, and support.
+ * Mobile responsive navigation drawer providing access to dynamic categories,
+ * subcategory accordions, promotional highlights, account actions, and concierge support.
+ *
+ * @param {MobileHeaderNavProps} props
+ * @returns {React.ReactElement | null}
  */
 export const MobileHeaderNav: React.FC<MobileHeaderNavProps> = ({
   isOpen,
   onClose,
   currentUser = null,
+  categories = [],
 }) => {
   const pathname = usePathname();
+  const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
+
+  const displayCategories = categories || [];
 
   // Close drawer on path change
   useEffect(() => {
@@ -42,6 +43,10 @@ export const MobileHeaderNav: React.FC<MobileHeaderNavProps> = ({
 
   if (!isOpen) return null;
 
+  const toggleCategory = (slug: string) => {
+    setExpandedSlug((prev) => (prev === slug ? null : slug));
+  };
+
   return (
     <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
       {/* Backdrop */}
@@ -56,7 +61,7 @@ export const MobileHeaderNav: React.FC<MobileHeaderNavProps> = ({
         {/* Drawer Header */}
         <div className="flex items-center justify-between px-5 h-16 border-b border-border/80">
           <span className="font-serif text-lg font-bold text-primary tracking-wide">
-            Menu
+            Navigation
           </span>
           <button
             type="button"
@@ -72,34 +77,98 @@ export const MobileHeaderNav: React.FC<MobileHeaderNavProps> = ({
 
         {/* Navigation Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4 divide-y divide-border/60">
-          {/* 1. Primary Categories */}
-          <div className="pb-4">
-            <p className="text-[11px] font-semibold text-text-subtle uppercase tracking-wider mb-2">
-              Categories
-            </p>
-            <div className="flex flex-col gap-1">
-              {PRIMARY_CATEGORIES.map((category) => (
+          {/* 1. Dynamic Categories with Subcategory Expansion */}
+          {displayCategories.length > 0 && (
+            <div className="pb-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] font-semibold text-text-subtle uppercase tracking-wider">
+                  Collections
+                </p>
                 <Link
-                  key={category.label}
-                  href={category.href}
-                  className="py-2 text-sm font-medium text-text-main hover:text-primary transition-colors"
+                  href="/collections"
+                  onClick={onClose}
+                  className="text-xs text-primary font-medium hover:underline"
                 >
-                  {category.label}
+                  All →
                 </Link>
-              ))}
+              </div>
+
+              <div className="flex flex-col gap-1">
+                {displayCategories.map((category) => {
+                  const hasChildren =
+                    Array.isArray(category.children) && category.children.length > 0;
+                  const isExpanded = expandedSlug === category.slug;
+
+                  return (
+                    <div key={category.id || category.slug} className="flex flex-col">
+                      <div className="flex items-center justify-between py-1.5">
+                        <Link
+                          href={`/category/${category.slug}`}
+                          onClick={onClose}
+                          className="text-sm font-medium text-text-main hover:text-primary transition-colors flex items-center gap-2"
+                        >
+                          <span>{category.name}</span>
+                          {category.isNew && (
+                            <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-xs font-semibold bg-primary/10 text-primary">
+                              New
+                            </span>
+                          )}
+                        </Link>
+
+                        {hasChildren && (
+                          <button
+                            type="button"
+                            onClick={() => toggleCategory(category.slug)}
+                            className="p-1 text-text-subtle hover:text-primary"
+                            aria-label={`Toggle ${category.name} subcategories`}
+                          >
+                            <svg
+                              className={`w-4 h-4 transform transition-transform ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Subcategories Accordion */}
+                      {hasChildren && isExpanded && (
+                        <div className="pl-3 py-1 flex flex-col gap-1.5 border-l-2 border-primary/20 ml-2 mb-2">
+                          {category.children!.map((sub) => (
+                            <Link
+                              key={sub.id || sub.slug}
+                              href={`/category/${sub.slug}`}
+                              onClick={onClose}
+                              className="text-xs text-text-secondary hover:text-primary py-1"
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 2. Highlights & Promotions */}
           <div className="py-4">
             <p className="text-[11px] font-semibold text-text-subtle uppercase tracking-wider mb-2">
-              Featured
+              Featured Highlights
             </p>
             <div className="flex flex-col gap-1">
               {NAV_HIGHLIGHTS.map((item) => (
                 <Link
                   key={item.label}
                   href={item.href}
+                  onClick={onClose}
                   className={`py-2 text-sm font-medium transition-colors ${
                     item.isSale
                       ? "text-accent font-semibold"
@@ -112,35 +181,48 @@ export const MobileHeaderNav: React.FC<MobileHeaderNavProps> = ({
             </div>
           </div>
 
-          {/* 3. Account / Support Links */}
-          <div className="pt-4 flex flex-col gap-2">
-            <Link
-              href="/contact"
-              className="py-2 text-sm text-text-secondary hover:text-primary flex items-center gap-2"
-            >
-              <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-              </svg>
-              Customer Support
-            </Link>
-
+          {/* 3. Account Actions */}
+          <div className="pt-4">
             {currentUser ? (
-              <Link
-                href="/account/profile"
-                className="py-2 text-sm text-text-secondary hover:text-primary flex items-center gap-2"
-              >
-                <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                </svg>
-                My Account ({currentUser.name?.split(" ")[0]})
-              </Link>
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-text-subtle">
+                  Signed in as{" "}
+                  <span className="font-semibold text-text-main">
+                    {currentUser.name || currentUser.email}
+                  </span>
+                </p>
+                <Link
+                  href="/account/profile"
+                  onClick={onClose}
+                  className="py-1.5 text-sm text-text-secondary hover:text-primary"
+                >
+                  My Profile
+                </Link>
+                <Link
+                  href="/account/orders"
+                  onClick={onClose}
+                  className="py-1.5 text-sm text-text-secondary hover:text-primary"
+                >
+                  My Orders
+                </Link>
+              </div>
             ) : (
-              <Link
-                href="/login"
-                className="mt-2 w-full py-2.5 px-4 rounded-lg bg-primary text-primary-contrast text-center text-xs font-semibold tracking-wide hover:bg-primary-hover transition-colors"
-              >
-                Sign In / Register
-              </Link>
+              <div className="flex flex-col gap-2 pt-1">
+                <Link
+                  href="/login"
+                  onClick={onClose}
+                  className="w-full text-center py-2.5 px-4 text-xs font-semibold uppercase tracking-wider bg-primary text-primary-contrast rounded-md hover:bg-primary-hover transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={onClose}
+                  className="w-full text-center py-2.5 px-4 text-xs font-semibold uppercase tracking-wider border border-border text-text-main rounded-md hover:bg-surface-soft transition-colors"
+                >
+                  Create Account
+                </Link>
+              </div>
             )}
           </div>
         </div>
@@ -148,4 +230,3 @@ export const MobileHeaderNav: React.FC<MobileHeaderNavProps> = ({
     </div>
   );
 };
-

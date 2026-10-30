@@ -1,9 +1,11 @@
 import { SafeUser } from "@/lib/auth/types";
+import { CategoryItem } from "@/lib/types/category";
 
 export interface NavItem {
   label: string;
   href: string;
   badge?: string;
+  slug?: string;
 }
 
 export interface HighlightItem extends NavItem {
@@ -12,6 +14,7 @@ export interface HighlightItem extends NavItem {
 
 export interface HeaderProps {
   currentUser?: SafeUser | null;
+  categories?: CategoryItem[];
   className?: string;
 }
 
@@ -29,3 +32,13 @@ export interface HeaderSearchProps {
   onSearchSubmit?: (query: string) => void;
 }
 
+export interface HeaderNavProps {
+  categories?: CategoryItem[];
+}
+
+export interface MobileHeaderNavProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentUser?: SafeUser | null;
+  categories?: CategoryItem[];
+}
