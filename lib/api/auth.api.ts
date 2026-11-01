@@ -71,7 +71,7 @@ export const loginWithCredentials = async (
   }
 
   const setCookieToken = extractRefreshTokenFromHeaders(response.headers);
-  const refreshToken = setCookieToken || "";
+  const refreshToken = payload.data.refreshToken || setCookieToken || "";
 
   return {
     user: payload.data.user,
@@ -85,7 +85,7 @@ export const loginWithCredentials = async (
  */
 export const registerUser = async (
   data: RegisterInput
-): Promise<SafeUser> => {
+): Promise<SafeUser & { accessToken?: string; refreshToken?: string }> => {
   const baseUrl = getBackendBaseUrl();
   const response = await fetch(`${baseUrl}/auth/register`, {
     method: "POST",
@@ -102,14 +102,25 @@ export const registerUser = async (
     cache: "no-store",
   });
 
-  const payload: BackendApiResponse<{ user: SafeUser }> = await response.json();
+  const payload: BackendApiResponse<{
+    user: SafeUser;
+    accessToken?: string;
+    refreshToken?: string;
+  }> = await response.json();
 
   if (!response.ok || !payload.success || !payload.data?.user) {
     const errorMessage = payload.message || "Failed to register account";
     throw new Error(errorMessage);
   }
 
-  return payload.data.user;
+  const setCookieToken = extractRefreshTokenFromHeaders(response.headers);
+  const refreshToken = payload.data.refreshToken || setCookieToken || undefined;
+
+  return {
+    ...payload.data.user,
+    accessToken: payload.data.accessToken,
+    refreshToken,
+  };
 };
 
 /**
@@ -150,11 +161,12 @@ export const loginWithSocial = async (
   }
 
   const setCookieToken = extractRefreshTokenFromHeaders(response.headers);
+  const refreshToken = payload.data.refreshToken || setCookieToken || "";
 
   return {
     user: payload.data.user,
     accessToken: payload.data.accessToken,
-    refreshToken: setCookieToken || "",
+    refreshToken,
   };
 };
 
@@ -238,7 +250,7 @@ export const refreshAccessToken = async (
 
       const newSetCookieToken = extractRefreshTokenFromHeaders(response.headers);
       const newRefreshToken =
-        newSetCookieToken || payload.data.refreshToken || refreshToken;
+        payload.data.refreshToken || newSetCookieToken || refreshToken;
 
       const result: RefreshResult = {
         user: payload.data.user,

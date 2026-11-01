@@ -1,4 +1,5 @@
 import { CategoryItem } from "../types/category";
+import { CatalogProductsResponse, CatalogFilters } from "../types/product";
 
 /**
  * Resolves the backend API base URL with fallback to local development server.
@@ -70,6 +71,16 @@ export async function fetchCategories({
               description: child.description || null,
               imageUrl: child.imageUrl || null,
               productCount: child.productCount ?? 0,
+              children: Array.isArray(child.children)
+                ? child.children.map((sub: any) => ({
+                    id: sub.id,
+                    name: sub.name,
+                    slug: sub.slug,
+                    description: sub.description || null,
+                    imageUrl: sub.imageUrl || null,
+                    productCount: sub.productCount ?? 0,
+                  }))
+                : [],
             }))
           : [],
       }));
@@ -131,6 +142,129 @@ export async function fetchCategoryBySlug(slug: string): Promise<CategoryItem | 
     return allCategories.find((c) => c.slug === slug) || null;
   } catch (error) {
     console.error(`Failed to fetch category by slug "${slug}":`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetches paginated and filtered product cards for a category PLP.
+ *
+ * @param {string} slug
+ * @param {Record<string, unknown>} [params]
+ * @param {string|null} [accessToken=null]
+ * @returns {Promise<CatalogProductsResponse>}
+ */
+export async function fetchCategoryProducts(
+  slug: string,
+  params: Record<string, unknown> = {},
+  accessToken: string | null = null
+): Promise<CatalogProductsResponse> {
+  const baseUrl = getCategoryBackendUrl();
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  });
+
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+  };
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  try {
+    const res = await fetch(
+      `${baseUrl}/categories/${encodeURIComponent(slug)}/products?${searchParams.toString()}`,
+      {
+        headers,
+        cache: "no-store",
+      }
+    );
+
+    if (!res.ok) {
+      console.error(`Category products API returned error status: ${res.status}`);
+      return {
+        products: [],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      };
+    }
+
+    const json = await res.json();
+    return {
+      category: json.data?.category,
+      products: json.data?.products || [],
+      pagination: json.pagination || {
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    };
+  } catch (error) {
+    console.error(`fetchCategoryProducts failed for "${slug}":`, error);
+    return {
+      products: [],
+      pagination: {
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    };
+  }
+}
+
+/**
+ * Fetches dynamic sidebar filter options scoped to a category.
+ *
+ * @param {string} slug
+ * @param {Record<string, unknown>} [params]
+ * @returns {Promise<CatalogFilters | null>}
+ */
+export async function fetchCategoryFilters(
+  slug: string,
+  params: Record<string, unknown> = {}
+): Promise<CatalogFilters | null> {
+  const baseUrl = getCategoryBackendUrl();
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  });
+
+  try {
+    const res = await fetch(
+      `${baseUrl}/categories/${encodeURIComponent(slug)}/filters?${searchParams.toString()}`,
+      {
+        next: { revalidate: 120 }, // Cache filters for 2 minutes
+      }
+    );
+
+    if (!res.ok) {
+      console.error(`Category filters API returned error status: ${res.status}`);
+      return null;
+    }
+
+    const json = await res.json();
+    return json.data || null;
+  } catch (error) {
+    console.error(`fetchCategoryFilters failed for "${slug}":`, error);
     return null;
   }
 }

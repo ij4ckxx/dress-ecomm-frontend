@@ -104,11 +104,23 @@ export const registerAction = async (
   try {
     await registerUser(parsed.data);
 
+    // Automatically sign in the user immediately after account creation
+    await signIn("credentials", {
+      email: parsed.data.email,
+      password: parsed.data.password,
+      redirect: false,
+    });
+
     return {
       success: true,
-      message: "Your account has been created successfully! Please sign in with your credentials.",
+      message: "Account created successfully! Welcome to Saayal Stories.",
     };
   } catch (error) {
+    const err = error as { digest?: string };
+    if (err?.digest?.startsWith("NEXT_REDIRECT")) {
+      throw error;
+    }
+
     return {
       success: false,
       message: error instanceof Error ? error.message : "Registration failed.",

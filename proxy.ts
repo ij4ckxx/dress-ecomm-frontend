@@ -68,10 +68,20 @@ export default async function proxy(request: NextRequest) {
 
   // 3. Inspect session token for impending expiration
   try {
-    const token = await getToken({
+    let token = await getToken({
       req: request,
       secret,
+      cookieName: activeCookieName,
+      salt: activeCookieName,
+      secureCookie: isSecure,
     });
+
+    if (!token) {
+      token = await getToken({
+        req: request,
+        secret,
+      });
+    }
 
     if (!token) {
       return response;

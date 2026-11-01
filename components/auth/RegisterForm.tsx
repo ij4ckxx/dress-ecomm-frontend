@@ -2,6 +2,7 @@
 
 import React, { useActionState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { registerAction } from "@/app/actions/auth.actions";
 import { ActionState } from "@/lib/auth/types";
 import { SocialLoginButtons } from "./SocialLoginButtons";
@@ -13,17 +14,33 @@ export interface RegisterFormProps {
 
 /**
  * Production-ready accessible registration form validating user credentials
- * with luxury boutique aesthetic and animated glowing train border inputs.
+ * with luxury boutique aesthetic and automatic immediate sign-in upon account creation.
  */
-export const RegisterForm: React.FC<RegisterFormProps> = () => {
+export const RegisterForm: React.FC<RegisterFormProps> = ({
+  onSuccessRedirect = "/account",
+}) => {
+  const router = useRouter();
+
+  const handleAction = async (
+    prevState: ActionState | null,
+    formData: FormData
+  ): Promise<ActionState> => {
+    const result = await registerAction(prevState, formData);
+    if (result.success) {
+      router.push(onSuccessRedirect);
+      router.refresh();
+    }
+    return result;
+  };
+
   const [state, formAction, isPending] = useActionState<ActionState | null, FormData>(
-    registerAction,
+    handleAction,
     null
   );
 
   return (
     <div className="w-full">
-      {/* Success banner */}
+      {/* Success banner during transition */}
       {state?.success && state?.message && (
         <div
           role="status"
@@ -31,7 +48,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
           className="mb-6 p-4 rounded-xl border border-success-border bg-success-bg text-sm text-success flex items-start gap-3"
         >
           <svg
-            className="w-5 h-5 flex-shrink-0 mt-0.5"
+            className="w-5 h-5 flex-shrink-0 mt-0.5 animate-spin"
             viewBox="0 0 20 20"
             fill="currentColor"
             aria-hidden="true"
@@ -44,12 +61,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
           </svg>
           <div>
             <p className="font-semibold">{state.message}</p>
-            <Link
-              href="/login"
-              className="mt-2 inline-block font-bold underline underline-offset-2 hover:opacity-80"
-            >
-              Click here to sign in &rarr;
-            </Link>
+            <p className="text-xs mt-1 text-text-secondary">Signing you in and loading your account...</p>
           </div>
         </div>
       )}

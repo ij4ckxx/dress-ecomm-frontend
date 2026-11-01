@@ -39,14 +39,58 @@ export const getServerAccessToken = async (options?: {
     return null;
   }
 
-  // Decrypt current session token from cookie
-  const token = await getToken({
-    req: {
-      headers: Object.fromEntries(reqHeaders.entries()),
-      cookies: Object.fromEntries(reqCookies.getAll().map((c) => [c.name, c.value])),
-    } as unknown as Request,
+  const allCookies = reqCookies.getAll();
+  const cookieString = allCookies.map((c) => `${c.name}=${c.value}`).join("; ");
+
+  const isSecure =
+    process.env.NODE_ENV === "production" &&
+    !reqHeaders.get("host")?.includes("localhost");
+
+  const candidateNames = isSecure
+    ? [
+        "__Secure-authjs.session-token",
+        "__Secure-next-auth.session-token",
+        "authjs.session-token",
+        "next-auth.session-token",
+      ]
+    : [
+        "authjs.session-token",
+        "next-auth.session-token",
+        "__Secure-authjs.session-token",
+        "__Secure-next-auth.session-token",
+      ];
+
+  let activeCookieName = isSecure
+    ? "__Secure-authjs.session-token"
+    : "authjs.session-token";
+  for (const name of candidateNames) {
+    if (reqCookies.get(name)) {
+      activeCookieName = name;
+      break;
+    }
+  }
+
+  const reqObj = {
+    headers: {
+      ...Object.fromEntries(reqHeaders.entries()),
+      cookie: cookieString,
+    },
+  } as unknown as Request;
+
+  let token = await getToken({
+    req: reqObj,
     secret,
+    cookieName: activeCookieName,
+    salt: activeCookieName,
+    secureCookie: isSecure,
   });
+
+  if (!token) {
+    token = await getToken({
+      req: reqObj,
+      secret,
+    });
+  }
 
   if (!token) {
     return null;
@@ -57,11 +101,28 @@ export const getServerAccessToken = async (options?: {
     return null;
   }
 
+  // Parse JWT exp claim directly from accessToken if available
+  let actualExpMs = backendTokens.accessTokenExpiresAt;
+  try {
+    const parts = backendTokens.accessToken.split(".");
+    if (parts.length === 3) {
+      const payloadBase64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      const decodedPayload = JSON.parse(
+        Buffer.from(payloadBase64, "base64").toString("utf-8")
+      );
+      if (typeof decodedPayload.exp === "number") {
+        actualExpMs = decodedPayload.exp * 1000;
+      }
+    }
+  } catch {
+    // Keep fallback actualExpMs
+  }
+
   // Check if token is still valid (with a 60-second grace window)
   const isExpiringSoon =
     options?.forceRefresh ||
-    !backendTokens.accessTokenExpiresAt ||
-    Date.now() >= backendTokens.accessTokenExpiresAt - 60_000;
+    !actualExpMs ||
+    Date.now() >= actualExpMs - 60_000;
 
   if (!isExpiringSoon) {
     return backendTokens.accessToken;
@@ -69,6 +130,9 @@ export const getServerAccessToken = async (options?: {
 
   // If expired or expiring soon, refresh token via backend refresh endpoint
   if (!backendTokens.refreshToken) {
+    if (actualExpMs && Date.now() < actualExpMs) {
+      return backendTokens.accessToken;
+    }
     return null;
   }
 
@@ -91,28 +155,19 @@ export const getServerAccessToken = async (options?: {
     // Attempt to persist the rotated token in the session cookie if supported in current context
     // (Allowed in Server Actions and Route Handlers; safely caught in Server Component render phase)
     try {
-      const isSecure =
-        process.env.NODE_ENV === "production" &&
-        !reqHeaders.get("host")?.includes("localhost");
-
-      const candidateNames = isSecure
-        ? ["__Secure-authjs.session-token", "__Secure-next-auth.session-token", "authjs.session-token", "next-auth.session-token"]
-        : ["authjs.session-token", "next-auth.session-token", "__Secure-authjs.session-token", "__Secure-next-auth.session-token"];
-
-      let activeCookieName = isSecure ? "__Secure-authjs.session-token" : "authjs.session-token";
-      for (const name of candidateNames) {
-        if (reqCookies.get(name)) {
-          activeCookieName = name;
-          break;
-        }
-      }
-
       const encodedToken = await encode({
         token,
         secret,
         salt: activeCookieName,
         maxAge: 7 * 24 * 60 * 60,
       });
+
+      // Clear any older chunk cookies to prevent corrupt multi-chunk cookie joins
+      for (const c of allCookies) {
+        if (c.name.startsWith(activeCookieName + ".") && c.name !== activeCookieName) {
+          reqCookies.delete(c.name);
+        }
+      }
 
       reqCookies.set(activeCookieName, encodedToken, {
         httpOnly: true,
@@ -129,6 +184,10 @@ export const getServerAccessToken = async (options?: {
     return refreshed.accessToken;
   } catch (error) {
     console.warn("Unable to refresh backend access token:", error);
+    // If refresh failed (e.g. transient network issue), but accessToken has not strictly expired yet, return it
+    if (actualExpMs && Date.now() < actualExpMs) {
+      return backendTokens.accessToken;
+    }
     return null;
   }
 };
@@ -146,13 +205,58 @@ export const updateServerSessionUser = async (
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (!secret) return;
 
-  const token = await getToken({
-    req: {
-      headers: Object.fromEntries(reqHeaders.entries()),
-      cookies: Object.fromEntries(reqCookies.getAll().map((c) => [c.name, c.value])),
-    } as unknown as Request,
+  const allCookies = reqCookies.getAll();
+  const cookieString = allCookies.map((c) => `${c.name}=${c.value}`).join("; ");
+
+  const isSecure =
+    process.env.NODE_ENV === "production" &&
+    !reqHeaders.get("host")?.includes("localhost");
+
+  const candidateNames = isSecure
+    ? [
+        "__Secure-authjs.session-token",
+        "__Secure-next-auth.session-token",
+        "authjs.session-token",
+        "next-auth.session-token",
+      ]
+    : [
+        "authjs.session-token",
+        "next-auth.session-token",
+        "__Secure-authjs.session-token",
+        "__Secure-next-auth.session-token",
+      ];
+
+  let activeCookieName = isSecure
+    ? "__Secure-authjs.session-token"
+    : "authjs.session-token";
+  for (const name of candidateNames) {
+    if (reqCookies.get(name)) {
+      activeCookieName = name;
+      break;
+    }
+  }
+
+  const reqObj = {
+    headers: {
+      ...Object.fromEntries(reqHeaders.entries()),
+      cookie: cookieString,
+    },
+  } as unknown as Request;
+
+  let token = await getToken({
+    req: reqObj,
     secret,
+    cookieName: activeCookieName,
+    salt: activeCookieName,
+    secureCookie: isSecure,
   });
+
+  if (!token) {
+    token = await getToken({
+      req: reqObj,
+      secret,
+    });
+  }
 
   if (!token || !token.user) return;
 
@@ -163,28 +267,18 @@ export const updateServerSessionUser = async (
   };
 
   try {
-    const isSecure =
-      process.env.NODE_ENV === "production" &&
-      !reqHeaders.get("host")?.includes("localhost");
-
-    const candidateNames = isSecure
-      ? ["__Secure-authjs.session-token", "__Secure-next-auth.session-token", "authjs.session-token", "next-auth.session-token"]
-      : ["authjs.session-token", "next-auth.session-token", "__Secure-authjs.session-token", "__Secure-next-auth.session-token"];
-
-    let activeCookieName = isSecure ? "__Secure-authjs.session-token" : "authjs.session-token";
-    for (const name of candidateNames) {
-      if (reqCookies.get(name)) {
-        activeCookieName = name;
-        break;
-      }
-    }
-
     const encodedToken = await encode({
       token,
       secret,
       salt: activeCookieName,
       maxAge: 7 * 24 * 60 * 60,
     });
+
+    for (const c of allCookies) {
+      if (c.name.startsWith(activeCookieName + ".") && c.name !== activeCookieName) {
+        reqCookies.delete(c.name);
+      }
+    }
 
     reqCookies.set(activeCookieName, encodedToken, {
       httpOnly: true,

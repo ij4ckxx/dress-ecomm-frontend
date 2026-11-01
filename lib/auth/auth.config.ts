@@ -38,6 +38,24 @@ export const authConfig: NextAuthConfig = {
 
         try {
           const authResult = await loginWithCredentials(parsed.data);
+          let accessTokenExpiresAt = Date.now() + ACCESS_TOKEN_EXPIRY_BUFFER_MS;
+          try {
+            const parts = authResult.accessToken.split(".");
+            if (parts.length === 3) {
+              const decoded = JSON.parse(
+                Buffer.from(
+                  parts[1].replace(/-/g, "+").replace(/_/g, "/"),
+                  "base64"
+                ).toString("utf-8")
+              );
+              if (typeof decoded.exp === "number") {
+                accessTokenExpiresAt = decoded.exp * 1000;
+              }
+            }
+          } catch {
+            // fallback
+          }
+
           return {
             id: authResult.user.id,
             name: authResult.user.name,
@@ -48,7 +66,7 @@ export const authConfig: NextAuthConfig = {
             backendTokens: {
               accessToken: authResult.accessToken,
               refreshToken: authResult.refreshToken,
-              accessTokenExpiresAt: Date.now() + ACCESS_TOKEN_EXPIRY_BUFFER_MS,
+              accessTokenExpiresAt,
             },
           };
         } catch {

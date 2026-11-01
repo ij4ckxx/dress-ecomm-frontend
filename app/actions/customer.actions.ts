@@ -41,7 +41,8 @@ async function withTokenRetry<T>(
     const isTokenError =
       message.includes("invalid or expired access token") ||
       message.includes("invalid_token") ||
-      message.includes("unauthorized");
+      message.includes("unauthorized") ||
+      message.includes("jwt expired");
 
     if (isTokenError) {
       const refreshedToken = await getServerAccessToken({ forceRefresh: true });

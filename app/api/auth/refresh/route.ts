@@ -55,10 +55,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const token = await getToken({
+  let token = await getToken({
     req: request,
     secret,
+    cookieName: activeCookieName,
+    salt: activeCookieName,
+    secureCookie: isSecure,
   });
+
+  if (!token) {
+    token = await getToken({
+      req: request,
+      secret,
+    });
+  }
 
   if (!token) {
     return NextResponse.json(
