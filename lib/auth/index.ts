@@ -73,7 +73,10 @@ export const getServerAccessToken = async (options?: {
   }
 
   try {
-    const refreshed = await refreshAccessToken(backendTokens.refreshToken);
+    const refreshed = await refreshAccessToken(backendTokens.refreshToken, {
+      userAgent: reqHeaders.get("user-agent") || undefined,
+      ipAddress: reqHeaders.get("x-forwarded-for") || undefined,
+    });
     const updatedBackendTokens: BackendTokens = {
       accessToken: refreshed.accessToken,
       refreshToken: refreshed.refreshToken,
@@ -92,18 +95,17 @@ export const getServerAccessToken = async (options?: {
         process.env.NODE_ENV === "production" &&
         !reqHeaders.get("host")?.includes("localhost");
 
-      const cookieName = isSecure
-        ? "__Secure-authjs.session-token"
-        : "authjs.session-token";
-      const fallbackCookieName = isSecure
-        ? "__Secure-next-auth.session-token"
-        : "next-auth.session-token";
+      const candidateNames = isSecure
+        ? ["__Secure-authjs.session-token", "__Secure-next-auth.session-token", "authjs.session-token", "next-auth.session-token"]
+        : ["authjs.session-token", "next-auth.session-token", "__Secure-authjs.session-token", "__Secure-next-auth.session-token"];
 
-      const activeCookieName = reqCookies.get(cookieName)
-        ? cookieName
-        : reqCookies.get(fallbackCookieName)
-        ? fallbackCookieName
-        : cookieName;
+      let activeCookieName = isSecure ? "__Secure-authjs.session-token" : "authjs.session-token";
+      for (const name of candidateNames) {
+        if (reqCookies.get(name)) {
+          activeCookieName = name;
+          break;
+        }
+      }
 
       const encodedToken = await encode({
         token,
@@ -165,18 +167,17 @@ export const updateServerSessionUser = async (
       process.env.NODE_ENV === "production" &&
       !reqHeaders.get("host")?.includes("localhost");
 
-    const cookieName = isSecure
-      ? "__Secure-authjs.session-token"
-      : "authjs.session-token";
-    const fallbackCookieName = isSecure
-      ? "__Secure-next-auth.session-token"
-      : "next-auth.session-token";
+    const candidateNames = isSecure
+      ? ["__Secure-authjs.session-token", "__Secure-next-auth.session-token", "authjs.session-token", "next-auth.session-token"]
+      : ["authjs.session-token", "next-auth.session-token", "__Secure-authjs.session-token", "__Secure-next-auth.session-token"];
 
-    const activeCookieName = reqCookies.get(cookieName)
-      ? cookieName
-      : reqCookies.get(fallbackCookieName)
-      ? fallbackCookieName
-      : cookieName;
+    let activeCookieName = isSecure ? "__Secure-authjs.session-token" : "authjs.session-token";
+    for (const name of candidateNames) {
+      if (reqCookies.get(name)) {
+        activeCookieName = name;
+        break;
+      }
+    }
 
     const encodedToken = await encode({
       token,

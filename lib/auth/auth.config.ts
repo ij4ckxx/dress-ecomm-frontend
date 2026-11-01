@@ -1,7 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import { loginWithCredentials, loginWithSocial, refreshAccessToken } from "../api/auth.api";
+import { loginWithCredentials, loginWithSocial } from "../api/auth.api";
 import { loginSchema } from "../validations/auth.schema";
 import { BackendTokens, SafeUser } from "./types";
 
@@ -67,7 +67,10 @@ export const authConfig: NextAuthConfig = {
   ],
   callbacks: {
     /**
-     * Server-side JWT callback managing user session and backend token refresh.
+     * Server-side JWT callback managing user session and backend token initialization.
+     * Note: Token rotation is handled in Middleware (`proxy.ts`), Server Actions (`getServerAccessToken`),
+     * and the `/api/auth/refresh` route where cookies can be safely persisted to the browser.
+     * Auto-refresh is omitted here to prevent desynchronization in read-only Server Component renders.
      */
     async jwt({ token, user, account }) {
       // 1. Initial login with Credentials
@@ -102,31 +105,7 @@ export const authConfig: NextAuthConfig = {
         }
       }
 
-      // 3. Subsequent invocations: check if backend access token has expired
-      const backendTokens = token.backendTokens as BackendTokens | undefined;
-      if (!backendTokens?.accessTokenExpiresAt || Date.now() < backendTokens.accessTokenExpiresAt) {
-        return token;
-      }
-
-      // 4. Access token has expired: call backend refresh API
-      try {
-        if (!backendTokens.refreshToken) {
-          throw new Error("Missing refresh token");
-        }
-
-        const refreshed = await refreshAccessToken(backendTokens.refreshToken);
-
-        token.user = refreshed.user;
-        token.backendTokens = {
-          accessToken: refreshed.accessToken,
-          refreshToken: refreshed.refreshToken,
-          accessTokenExpiresAt: Date.now() + ACCESS_TOKEN_EXPIRY_BUFFER_MS,
-        };
-        delete token.error;
-      } catch {
-        token.error = "RefreshTokenError";
-      }
-
+      // 3. Subsequent invocations: return existing token without mutating cookies in read-only contexts
       return token;
     },
 

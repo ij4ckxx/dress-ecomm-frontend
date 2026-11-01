@@ -11,17 +11,8 @@ import { ChangePasswordForm } from "@/components/account/ChangePasswordForm";
  */
 export default async function AccountProfilePage() {
   const user = await requireAuth();
-  let token = await getServerAccessToken();
-  let freshProfile = token ? await getCustomerProfile(token) : null;
-
-  // If initial profile fetch returned null and token exists, retry once with force refresh
-  if (!freshProfile && token) {
-    const refreshedToken = await getServerAccessToken({ forceRefresh: true });
-    if (refreshedToken) {
-      freshProfile = await getCustomerProfile(refreshedToken);
-    }
-  }
-
+  const token = await getServerAccessToken();
+  const freshProfile = token ? await getCustomerProfile(token) : null;
   const activeUser = freshProfile || user;
 
   return (

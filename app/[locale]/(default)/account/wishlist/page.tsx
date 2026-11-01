@@ -8,15 +8,8 @@ import { WishlistManager } from "@/components/account/WishlistManager";
  */
 export default async function AccountWishlistPage() {
   await requireAuth();
-  let token = await getServerAccessToken();
-  let wishlist = token ? await getCustomerWishlist(token) : [];
-
-  if (wishlist.length === 0 && token) {
-    const refreshedToken = await getServerAccessToken({ forceRefresh: true });
-    if (refreshedToken) {
-      wishlist = await getCustomerWishlist(refreshedToken);
-    }
-  }
+  const token = await getServerAccessToken();
+  const wishlist = token ? await getCustomerWishlist(token) : [];
 
   return (
     <div className="bg-surface-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">

@@ -9,6 +9,7 @@ import {
   updateCustomerProfileWithFormData,
   changeCustomerPassword,
   createCustomerAddress,
+  updateCustomerAddress,
   deleteCustomerAddress,
   setDefaultCustomerAddress,
   removeWishlistItem,
@@ -23,13 +24,18 @@ import { ActionState } from "@/lib/auth/types";
 async function withTokenRetry<T>(
   operation: (token: string) => Promise<T>
 ): Promise<T> {
-  const initialToken = await getServerAccessToken();
-  if (!initialToken) {
+  let token = await getServerAccessToken();
+  if (!token) {
+    // Attempt force refresh if initial token was expired or missing
+    token = await getServerAccessToken({ forceRefresh: true });
+  }
+
+  if (!token) {
     throw new Error("Session expired. Please log in again.");
   }
 
   try {
-    return await operation(initialToken);
+    return await operation(token);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message.toLowerCase() : "";
     const isTokenError =
@@ -244,14 +250,6 @@ export const createAddressAction = async (
   formData: FormData
 ): Promise<ActionState> => {
   await requireAuth();
-  const accessToken = await getServerAccessToken();
-
-  if (!accessToken) {
-    return {
-      success: false,
-      message: "Session expired. Please log in again.",
-    };
-  }
 
   const firstName = (formData.get("firstName") as string) || "";
   const lastName = (formData.get("lastName") as string) || "";
@@ -306,6 +304,93 @@ export const createAddressAction = async (
       message: error instanceof Error ? error.message : "Failed to save address.",
     };
   }
+};
+
+/**
+ * Server action to update an existing delivery address.
+ */
+export const updateAddressAction = async (
+  addressId: string,
+  _prevState: ActionState | null,
+  formData: FormData
+): Promise<ActionState> => {
+  await requireAuth();
+  const accessToken = await getServerAccessToken();
+
+  if (!accessToken) {
+    return {
+      success: false,
+      message: "Session expired. Please log in again.",
+    };
+  }
+
+  const firstName = (formData.get("firstName") as string) || "";
+  const lastName = (formData.get("lastName") as string) || "";
+  const address1 = (formData.get("address1") as string) || "";
+  const address2 = (formData.get("address2") as string) || "";
+  const city = (formData.get("city") as string) || "";
+  const state = (formData.get("state") as string) || "";
+  const postalCode = (formData.get("postalCode") as string) || "";
+  const country = (formData.get("country") as string) || "India";
+  const phone = (formData.get("phone") as string) || "";
+  const isDefault = formData.get("isDefault") === "on";
+
+  if (!firstName.trim() || !lastName.trim()) {
+    return { success: false, message: "First and last name are required." };
+  }
+  if (!address1.trim()) {
+    return { success: false, message: "Street address is required." };
+  }
+  if (!city.trim() || !state.trim()) {
+    return { success: false, message: "City and State are required." };
+  }
+  if (!postalCode.trim()) {
+    return { success: false, message: "Pincode / Postal code is required." };
+  }
+
+  try {
+    await withTokenRetry(async (token) => {
+      await updateCustomerAddress(token, addressId, {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        address1: address1.trim(),
+        address2: address2.trim() || null,
+        city: city.trim(),
+        state: state.trim(),
+        postalCode: postalCode.trim(),
+        country: country.trim(),
+        phone: phone.trim() || null,
+        isDefault,
+      });
+    });
+
+    revalidatePath("/account/addresses");
+    revalidatePath("/account");
+
+    return {
+      success: true,
+      message: "Address updated successfully.",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to update address.",
+    };
+  }
+};
+
+/**
+ * Unified server action to save an address (creates new or updates existing based on addressId).
+ */
+export const saveAddressAction = async (
+  _prevState: ActionState | null,
+  formData: FormData
+): Promise<ActionState> => {
+  const addressId = (formData.get("addressId") as string) || "";
+  if (addressId.trim()) {
+    return updateAddressAction(addressId.trim(), _prevState, formData);
+  }
+  return createAddressAction(_prevState, formData);
 };
 
 /**

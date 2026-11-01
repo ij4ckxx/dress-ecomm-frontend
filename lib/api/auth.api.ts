@@ -158,47 +158,109 @@ export const loginWithSocial = async (
   };
 };
 
+export interface RefreshResult {
+  user: SafeUser;
+  accessToken: string;
+  refreshToken: string;
+}
+
+// In-flight refresh promise map to prevent parallel/competing refreshes for the same token
+const inFlightRefreshes = new Map<string, Promise<RefreshResult>>();
+
+// Recent rotation cache (30-second TTL) so concurrent requests reusing the old token get the fresh result
+const recentRotationCache = new Map<
+  string,
+  { result: RefreshResult; expiresAt: number }
+>();
+
+const CACHE_TTL_MS = 30 * 1000; // 30 seconds
+
+/**
+ * Cleans up expired entries from the recent rotation cache.
+ */
+const cleanupRotationCache = (): void => {
+  const now = Date.now();
+  for (const [key, value] of recentRotationCache.entries()) {
+    if (value.expiresAt <= now) {
+      recentRotationCache.delete(key);
+    }
+  }
+};
+
 /**
  * Refreshes an expired backend access token using a valid refresh token.
+ * Leverages single-flight deduplication and recent rotation caching to prevent
+ * concurrency races and premature 401 session terminations under strict token rotation.
  */
 export const refreshAccessToken = async (
   refreshToken: string,
   clientMeta?: { userAgent?: string; ipAddress?: string }
-): Promise<{
-  user: SafeUser;
-  accessToken: string;
-  refreshToken: string;
-}> => {
+): Promise<RefreshResult> => {
   if (!refreshToken) {
     throw new Error("No refresh token available");
   }
 
-  const baseUrl = getBackendBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/refresh`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: `refreshToken=${refreshToken}`,
-      ...(clientMeta?.userAgent ? { "User-Agent": clientMeta.userAgent } : {}),
-      ...(clientMeta?.ipAddress ? { "X-Forwarded-For": clientMeta.ipAddress } : {}),
-    },
-    body: JSON.stringify({ refreshToken }),
-    cache: "no-store",
-  });
+  cleanupRotationCache();
 
-  const payload: BackendApiResponse<BackendAuthData> = await response.json();
-
-  if (!response.ok || !payload.success || !payload.data) {
-    throw new Error(payload.message || "Token refresh failed");
+  // 1. Check if this token was already rotated in the last 30 seconds
+  const cached = recentRotationCache.get(refreshToken);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.result;
   }
 
-  const newSetCookieToken = extractRefreshTokenFromHeaders(response.headers);
+  // 2. Check if a refresh request for this token is currently in flight
+  const existingPromise = inFlightRefreshes.get(refreshToken);
+  if (existingPromise) {
+    return await existingPromise;
+  }
 
-  return {
-    user: payload.data.user,
-    accessToken: payload.data.accessToken,
-    refreshToken: newSetCookieToken || refreshToken,
-  };
+  // 3. Initiate single-flight refresh operation
+  const refreshPromise = (async (): Promise<RefreshResult> => {
+    try {
+      const baseUrl = getBackendBaseUrl();
+      const response = await fetch(`${baseUrl}/auth/refresh`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `refreshToken=${refreshToken}`,
+          ...(clientMeta?.userAgent ? { "User-Agent": clientMeta.userAgent } : {}),
+          ...(clientMeta?.ipAddress ? { "X-Forwarded-For": clientMeta.ipAddress } : {}),
+        },
+        body: JSON.stringify({ refreshToken }),
+        cache: "no-store",
+      });
+
+      const payload: BackendApiResponse<BackendAuthData> = await response.json();
+
+      if (!response.ok || !payload.success || !payload.data) {
+        throw new Error(payload.message || "Token refresh failed");
+      }
+
+      const newSetCookieToken = extractRefreshTokenFromHeaders(response.headers);
+      const newRefreshToken =
+        newSetCookieToken || payload.data.refreshToken || refreshToken;
+
+      const result: RefreshResult = {
+        user: payload.data.user,
+        accessToken: payload.data.accessToken,
+        refreshToken: newRefreshToken,
+      };
+
+      // Cache rotation result for 30s under BOTH old and new refresh tokens
+      const expiresAt = Date.now() + CACHE_TTL_MS;
+      recentRotationCache.set(refreshToken, { result, expiresAt });
+      if (newRefreshToken && newRefreshToken !== refreshToken) {
+        recentRotationCache.set(newRefreshToken, { result, expiresAt });
+      }
+
+      return result;
+    } finally {
+      inFlightRefreshes.delete(refreshToken);
+    }
+  })();
+
+  inFlightRefreshes.set(refreshToken, refreshPromise);
+  return await refreshPromise;
 };
 
 /**

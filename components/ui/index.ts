@@ -5,4 +5,5 @@ export * from "./Select";
 export * from "./RadioGroup";
 export * from "./Checkbox";
 export * from "./Textarea";
+export * from "./Pagination";
 

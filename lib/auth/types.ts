@@ -65,6 +65,7 @@ export interface BackendAuthData {
     phone?: string | null;
   };
   accessToken: string;
+  refreshToken?: string;
 }
 
 /**

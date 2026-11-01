@@ -305,17 +305,59 @@ const normalizeAddress = (raw: Record<string, unknown>): CustomerAddress => {
   };
 };
 
+export interface PaginationMetadata {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface GetCustomerAddressesOptions {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sort?: "newest" | "oldest" | "city_asc" | "city_desc" | string;
+  all?: boolean;
+}
+
+export interface GetCustomerAddressesResult {
+  addresses: CustomerAddress[];
+  pagination: PaginationMetadata;
+}
+
 /**
- * Fetches all saved shipping addresses for the authenticated customer.
+ * Fetches saved shipping addresses for the authenticated customer with pagination.
  */
 export const getCustomerAddresses = async (
-  accessToken: string
-): Promise<CustomerAddress[]> => {
-  if (!accessToken) return [];
+  accessToken: string,
+  options?: GetCustomerAddressesOptions
+): Promise<GetCustomerAddressesResult> => {
+  const fallbackPagination: PaginationMetadata = {
+    page: options?.page || 1,
+    limit: options?.limit || 10,
+    total: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  };
+
+  if (!accessToken) return { addresses: [], pagination: fallbackPagination };
 
   const baseUrl = getBackendBaseUrl();
+  const queryParams = new URLSearchParams();
+  if (options?.page) queryParams.set("page", String(options.page));
+  if (options?.limit) queryParams.set("limit", String(options.limit));
+  if (options?.search) queryParams.set("search", options.search);
+  if (options?.sort) queryParams.set("sort", options.sort);
+  if (options?.all) queryParams.set("all", "true");
+
+  const qs = queryParams.toString();
+  const url = `${baseUrl}/customer/addresses${qs ? `?${qs}` : ""}`;
+
   try {
-    const res = await fetch(`${baseUrl}/customer/addresses`, {
+    const res = await fetch(url, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -323,15 +365,72 @@ export const getCustomerAddresses = async (
       cache: "no-store",
     });
 
-    if (!res.ok) return [];
+    if (!res.ok) return { addresses: [], pagination: fallbackPagination };
     const json = await res.json();
     const rawList = Array.isArray(json.data)
       ? json.data
       : json.data?.addresses || [];
-    return (rawList as Record<string, unknown>[]).map(normalizeAddress);
+    const addresses = (rawList as Record<string, unknown>[]).map(normalizeAddress);
+
+    const rawPagination = json.pagination || json.data?.pagination || {};
+    const total = typeof rawPagination.total === "number" ? rawPagination.total : addresses.length;
+    const limit = rawPagination.limit || options?.limit || 10;
+    const totalPages =
+      rawPagination.totalPages || Math.max(1, Math.ceil(total / (limit || 10)));
+    const page = rawPagination.page || options?.page || 1;
+
+    const pagination: PaginationMetadata = {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNextPage: rawPagination.hasNextPage ?? page < totalPages,
+      hasPreviousPage: rawPagination.hasPreviousPage ?? page > 1,
+    };
+
+    return { addresses, pagination };
   } catch {
-    return [];
+    return { addresses: [], pagination: fallbackPagination };
   }
+};
+
+/**
+ * Updates an existing delivery address for the customer.
+ */
+export const updateCustomerAddress = async (
+  accessToken: string,
+  addressId: string,
+  data: {
+    firstName?: string;
+    lastName?: string;
+    address1?: string;
+    address2?: string | null;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+    phone?: string | null;
+    isDefault?: boolean;
+  }
+): Promise<CustomerAddress> => {
+  const baseUrl = getBackendBaseUrl();
+  const res = await fetch(`${baseUrl}/customer/addresses/${addressId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
+    cache: "no-store",
+  });
+
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "Failed to update address");
+  }
+
+  const rawAddress = json.data?.address || json.data;
+  return normalizeAddress(rawAddress as Record<string, unknown>);
 };
 
 /**
