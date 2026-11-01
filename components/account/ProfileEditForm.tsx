@@ -3,13 +3,15 @@
 import React, { useActionState } from "react";
 import { updateProfileAction } from "@/app/actions/customer.actions";
 import { ActionState, SafeUser } from "@/lib/auth/types";
+import { Input } from "@/components/ui/Input";
 
 export interface ProfileEditFormProps {
   user: SafeUser;
 }
 
 /**
- * Accessible client form for updating customer profile details.
+ * Accessible client form for updating customer profile details with
+ * animated lightning shooting star borders and luxury boutique styling.
  */
 export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ user }) => {
   const [state, formAction, isPending] = useActionState<ActionState | null, FormData>(
@@ -56,67 +58,80 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ user }) => {
       <form action={formAction} className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Full Name */}
-          <div>
-            <label
-              htmlFor="profile-name"
-              className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
-            >
-              Full Name <span className="text-error" aria-hidden="true">*</span>
-            </label>
-            <input
-              id="profile-name"
-              name="name"
-              type="text"
-              defaultValue={user.name}
-              required
-              disabled={isPending}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main text-sm focus-ring disabled:opacity-50"
-            />
-          </div>
+          <Input
+            id="profile-name"
+            name="name"
+            type="text"
+            label="Full Name"
+            required
+            defaultValue={user.name}
+            disabled={isPending}
+            error={state?.errors?.name?.[0]}
+            startIcon={
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            }
+          />
 
           {/* Phone Number */}
-          <div>
-            <label
-              htmlFor="profile-phone"
-              className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
-            >
-              Phone Number
-            </label>
-            <input
-              id="profile-phone"
-              name="phone"
-              type="tel"
-              defaultValue={user.phone || ""}
-              placeholder="+91 98765 43210"
-              disabled={isPending}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring disabled:opacity-50"
-            />
-          </div>
-        </div>
-
-        {/* Email Address (Read-only) */}
-        <div>
-          <label
-            htmlFor="profile-email"
-            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
-          >
-            Email Address <span className="text-[10px] text-text-subtle normal-case font-normal">(Primary account identity)</span>
-          </label>
-          <input
-            id="profile-email"
-            type="email"
-            value={user.email}
-            disabled
-            readOnly
-            className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-soft text-text-secondary text-sm cursor-not-allowed"
+          <Input
+            id="profile-phone"
+            name="phone"
+            type="tel"
+            label="Phone Number"
+            optional
+            defaultValue={user.phone || ""}
+            placeholder="+91 98765 43210"
+            disabled={isPending}
+            error={state?.errors?.phone?.[0]}
+            startIcon={
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+            }
           />
         </div>
 
-        <div className="pt-2">
+        {/* Email Address (Read-only for security) */}
+        <Input
+          id="profile-email"
+          type="email"
+          label="Email Address"
+          value={user.email}
+          disabled
+          hint="Account email address cannot be changed directly."
+          startIcon={
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          }
+        />
+
+        {/* Avatar URL (Optional) */}
+        <Input
+          id="profile-avatar"
+          name="avatarUrl"
+          type="url"
+          label="Profile Picture URL"
+          optional
+          defaultValue={user.avatarUrl || ""}
+          placeholder="https://images.example.com/photo.jpg"
+          disabled={isPending}
+          error={state?.errors?.avatarUrl?.[0]}
+          hint="Link to your publicly hosted portrait photo."
+          startIcon={
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          }
+        />
+
+        <div className="pt-2 flex justify-end">
           <button
             type="submit"
             disabled={isPending}
-            className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-xs uppercase tracking-widest transition-all shadow-sm focus-ring disabled:opacity-50"
+            className="py-2.5 px-6 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-xs uppercase tracking-widest transition-all shadow-sm focus-ring disabled:opacity-50 cursor-pointer flex items-center gap-2"
           >
             {isPending ? "Saving Changes..." : "Save Profile Changes"}
           </button>
@@ -127,4 +142,3 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ user }) => {
 };
 
 export default ProfileEditForm;
-

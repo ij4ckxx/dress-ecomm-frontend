@@ -4,6 +4,7 @@ import React, { useActionState } from "react";
 import Link from "next/link";
 import { forgotPasswordAction } from "@/app/actions/auth.actions";
 import { ActionState } from "@/lib/auth/types";
+import { Input } from "@/components/ui/Input";
 
 /**
  * Accessible forgot-password form for requesting a password reset link.
@@ -67,53 +68,73 @@ export const ForgotPasswordForm: React.FC = () => {
         </div>
       )}
 
-      <form action={formAction} noValidate className="space-y-5">
-        <div>
-          <label
-            htmlFor="forgot-email"
-            className="block text-sm font-medium text-text-main mb-1.5"
-          >
-            Account Email Address <span className="text-error" aria-hidden="true">*</span>
-          </label>
-          <input
-            id="forgot-email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            aria-required="true"
-            aria-invalid={Boolean(state?.errors?.email)}
-            aria-describedby={state?.errors?.email ? "forgot-email-error" : "forgot-email-desc"}
-            placeholder="you@example.com"
-            disabled={isPending}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
-          />
-          <p id="forgot-email-desc" className="mt-1.5 text-xs text-text-subtle">
-            We will send a secure one-time password reset link to this address.
-          </p>
-          {state?.errors?.email && (
-            <p id="forgot-email-error" role="alert" className="mt-1 text-xs text-error font-medium">
-              {state.errors.email[0]}
-            </p>
-          )}
-        </div>
+      <form action={formAction} noValidate className="space-y-4">
+        {/* Email Field */}
+        <Input
+          id="forgot-email"
+          name="email"
+          type="email"
+          label="Email Address"
+          required
+          autoComplete="email"
+          placeholder="name@example.com"
+          disabled={isPending}
+          error={state?.errors?.email?.[0]}
+          startIcon={
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.75}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          }
+        />
 
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={isPending}
           aria-busy={isPending}
-          className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-sm tracking-wide transition-all shadow-sm focus-ring disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full mt-2 py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-xs uppercase tracking-widest transition-all shadow-sm focus-ring disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group cursor-pointer"
         >
           {isPending ? (
             <>
-              <svg className="animate-spin w-4 h-4 text-current" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <svg
+                className="animate-spin w-4 h-4 text-current"
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
-              <span>Sending reset link...</span>
+              <span>Sending Reset Instructions...</span>
             </>
           ) : (
-            <span>Send Reset Instructions</span>
+            <span className="flex items-center gap-1.5">
+              <span>Send Instructions</span>
+              <span className="transition-transform duration-200 group-hover:translate-x-1">
+                &rarr;
+              </span>
+            </span>
           )}
         </button>
       </form>
@@ -121,9 +142,9 @@ export const ForgotPasswordForm: React.FC = () => {
       <div className="mt-6 text-center">
         <Link
           href="/login"
-          className="text-xs text-text-secondary hover:text-primary font-medium underline underline-offset-4 transition-colors focus-ring rounded"
+          className="text-xs font-semibold text-primary hover:text-primary-hover underline underline-offset-2"
         >
-          &larr; Return to Sign In
+          &larr; Back to sign in
         </Link>
       </div>
     </div>

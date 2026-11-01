@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useActionState, useState } from "react";
+import React, { useActionState } from "react";
 import Link from "next/link";
 import { resetPasswordAction } from "@/app/actions/auth.actions";
 import { ActionState } from "@/lib/auth/types";
+import { Input } from "@/components/ui/Input";
 
 export interface ResetPasswordFormProps {
   initialEmail?: string;
@@ -12,15 +13,12 @@ export interface ResetPasswordFormProps {
 
 /**
  * Accessible reset-password form allowing users to finalize password recovery with a token,
- * password confirmation, and luxury styling.
+ * password confirmation, and glowing lightning shooting star inputs.
  */
 export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
   initialEmail = "",
   initialToken = "",
 }) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const [state, formAction, isPending] = useActionState<ActionState | null, FormData>(
     resetPasswordAction,
     null
@@ -83,180 +81,170 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
       )}
 
       <form action={formAction} noValidate className="space-y-4">
-        {/* Email */}
-        <div>
-          <label
-            htmlFor="reset-email"
-            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
-          >
-            Email Address <span className="text-error" aria-hidden="true">*</span>
-          </label>
-          <input
-            id="reset-email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            defaultValue={initialEmail}
-            required
-            aria-required="true"
-            aria-invalid={Boolean(state?.errors?.email)}
-            aria-describedby={state?.errors?.email ? "reset-email-error" : undefined}
-            placeholder="name@example.com"
-            disabled={isPending}
-            className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
-          />
-          {state?.errors?.email && (
-            <p id="reset-email-error" role="alert" className="mt-1 text-xs text-error font-medium">
-              {state.errors.email[0]}
-            </p>
-          )}
-        </div>
+        {/* Email Address (Pre-filled if in query param) */}
+        <Input
+          id="reset-email"
+          name="email"
+          type="email"
+          label="Account Email"
+          required
+          autoComplete="email"
+          defaultValue={initialEmail}
+          placeholder="name@example.com"
+          disabled={isPending || Boolean(initialEmail)}
+          error={state?.errors?.email?.[0]}
+          startIcon={
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.75}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          }
+        />
 
-        {/* Reset Token */}
-        <div>
-          <label
-            htmlFor="reset-token"
-            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
-          >
-            Reset Verification Token <span className="text-error" aria-hidden="true">*</span>
-          </label>
-          <input
-            id="reset-token"
-            name="token"
-            type="text"
-            defaultValue={initialToken}
-            required
-            aria-required="true"
-            aria-invalid={Boolean(state?.errors?.token)}
-            aria-describedby={state?.errors?.token ? "reset-token-error" : undefined}
-            placeholder="Paste verification token from email"
-            disabled={isPending}
-            className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring font-mono transition-colors disabled:opacity-50"
-          />
-          {state?.errors?.token && (
-            <p id="reset-token-error" role="alert" className="mt-1 text-xs text-error font-medium">
-              {state.errors.token[0]}
-            </p>
-          )}
-        </div>
+        {/* Security Reset Token */}
+        <Input
+          id="reset-token"
+          name="token"
+          type="text"
+          label="Verification Code / Token"
+          required
+          defaultValue={initialToken}
+          placeholder="Enter the code sent to your email"
+          disabled={isPending || Boolean(initialToken)}
+          error={state?.errors?.token?.[0]}
+          startIcon={
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.75}
+                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+              />
+            </svg>
+          }
+        />
 
         {/* New Password */}
-        <div>
-          <label
-            htmlFor="reset-new-password"
-            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
-          >
-            New Password <span className="text-error" aria-hidden="true">*</span>
-          </label>
-          <div className="relative">
-            <input
-              id="reset-new-password"
-              name="newPassword"
-              type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
-              required
-              aria-required="true"
-              aria-invalid={Boolean(state?.errors?.newPassword)}
-              aria-describedby="reset-password-hint reset-new-password-error"
-              placeholder="••••••••"
-              disabled={isPending}
-              className="w-full px-4 py-2.5 pr-11 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-text-subtle hover:text-text-main focus-ring rounded-lg my-1"
+        <Input
+          id="reset-new-password"
+          name="newPassword"
+          type="password"
+          label="New Password"
+          required
+          autoComplete="new-password"
+          placeholder="••••••••"
+          disabled={isPending}
+          error={state?.errors?.newPassword?.[0]}
+          hint="At least 8 characters, containing both letters and numbers."
+          startIcon={
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              {showPassword ? (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              )}
-            </button>
-          </div>
-          <p id="reset-password-hint" className="mt-1 text-xs text-text-subtle">
-            At least 8 characters, containing letters and numbers.
-          </p>
-          {state?.errors?.newPassword && (
-            <p id="reset-new-password-error" role="alert" className="mt-1 text-xs text-error font-medium">
-              {state.errors.newPassword[0]}
-            </p>
-          )}
-        </div>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.75}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          }
+        />
 
         {/* Confirm New Password */}
-        <div>
-          <label
-            htmlFor="reset-confirm-password"
-            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
-          >
-            Confirm New Password <span className="text-error" aria-hidden="true">*</span>
-          </label>
-          <div className="relative">
-            <input
-              id="reset-confirm-password"
-              name="confirmPassword"
-              type={showConfirmPassword ? "text" : "password"}
-              autoComplete="new-password"
-              required
-              aria-required="true"
-              aria-invalid={Boolean(state?.errors?.confirmPassword)}
-              aria-describedby={state?.errors?.confirmPassword ? "reset-confirm-password-error" : undefined}
-              placeholder="••••••••"
-              disabled={isPending}
-              className="w-full px-4 py-2.5 pr-11 rounded-xl border border-border bg-surface-card text-text-main placeholder-text-subtle text-sm focus-ring transition-colors disabled:opacity-50"
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword((prev) => !prev)}
-              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-text-subtle hover:text-text-main focus-ring rounded-lg my-1"
+        <Input
+          id="reset-confirm-password"
+          name="confirmPassword"
+          type="password"
+          label="Confirm New Password"
+          required
+          autoComplete="new-password"
+          placeholder="••••••••"
+          disabled={isPending}
+          error={state?.errors?.confirmPassword?.[0]}
+          startIcon={
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              {showConfirmPassword ? (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              )}
-            </button>
-          </div>
-          {state?.errors?.confirmPassword && (
-            <p id="reset-confirm-password-error" role="alert" className="mt-1 text-xs text-error font-medium">
-              {state.errors.confirmPassword[0]}
-            </p>
-          )}
-        </div>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.75}
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
+            </svg>
+          }
+        />
 
-        {/* Submit */}
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={isPending}
           aria-busy={isPending}
-          className="w-full mt-2 py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-xs uppercase tracking-widest transition-all shadow-sm focus-ring disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full mt-2 py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-xs uppercase tracking-widest transition-all shadow-sm focus-ring disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group cursor-pointer"
         >
           {isPending ? (
             <>
-              <svg className="animate-spin w-4 h-4 text-current" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <svg
+                className="animate-spin w-4 h-4 text-current"
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
               <span>Updating password...</span>
             </>
           ) : (
-            <span>Update Password</span>
+            <span className="flex items-center gap-1.5">
+              <span>Set New Password</span>
+              <span className="transition-transform duration-200 group-hover:translate-x-1">
+                &rarr;
+              </span>
+            </span>
           )}
         </button>
       </form>
+
+      <div className="mt-6 text-center">
+        <Link
+          href="/login"
+          className="text-xs font-semibold text-primary hover:text-primary-hover underline underline-offset-2"
+        >
+          &larr; Back to sign in
+        </Link>
+      </div>
     </div>
   );
 };

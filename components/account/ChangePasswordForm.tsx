@@ -1,17 +1,15 @@
 "use client";
 
-import React, { useState, useActionState } from "react";
+import React, { useActionState } from "react";
 import { changePasswordAction } from "@/app/actions/customer.actions";
 import { ActionState } from "@/lib/auth/types";
+import { Input } from "@/components/ui/Input";
 
 /**
- * Accessible client form for changing customer account password.
+ * Accessible client form for changing customer account password
+ * with animated lightning shooting star border inputs.
  */
 export const ChangePasswordForm: React.FC = () => {
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-
   const [state, formAction, isPending] = useActionState<ActionState | null, FormData>(
     changePasswordAction,
     null
@@ -55,129 +53,62 @@ export const ChangePasswordForm: React.FC = () => {
 
       <form action={formAction} className="space-y-5">
         {/* Current Password */}
-        <div>
-          <label
-            htmlFor="currentPassword"
-            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
-          >
-            Current Password <span className="text-error" aria-hidden="true">*</span>
-          </label>
-          <div className="relative">
-            <input
-              id="currentPassword"
-              name="currentPassword"
-              type={showCurrent ? "text" : "password"}
-              required
-              disabled={isPending}
-              placeholder="Enter current password"
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main text-sm focus-ring disabled:opacity-50 pr-10"
-            />
-            <button
-              type="button"
-              onClick={() => setShowCurrent(!showCurrent)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-subtle hover:text-text-main p-1"
-              aria-label={showCurrent ? "Hide current password" : "Show current password"}
-            >
-              {showCurrent ? (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
+        <Input
+          id="currentPassword"
+          name="currentPassword"
+          type="password"
+          label="Current Password"
+          required
+          disabled={isPending}
+          placeholder="Enter current password"
+          error={state?.errors?.currentPassword?.[0]}
+          startIcon={
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          }
+        />
 
         {/* New Password */}
-        <div>
-          <label
-            htmlFor="newPassword"
-            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
-          >
-            New Password <span className="text-error" aria-hidden="true">*</span>
-          </label>
-          <div className="relative">
-            <input
-              id="newPassword"
-              name="newPassword"
-              type={showNew ? "text" : "password"}
-              required
-              minLength={8}
-              disabled={isPending}
-              placeholder="Minimum 8 characters with letters & numbers"
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main text-sm focus-ring disabled:opacity-50 pr-10"
-            />
-            <button
-              type="button"
-              onClick={() => setShowNew(!showNew)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-subtle hover:text-text-main p-1"
-              aria-label={showNew ? "Hide new password" : "Show new password"}
-            >
-              {showNew ? (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              )}
-            </button>
-          </div>
-          <p className="text-[11px] text-text-subtle mt-1">
-            Must contain at least 8 characters, including 1 letter and 1 number.
-          </p>
-        </div>
+        <Input
+          id="newPassword"
+          name="newPassword"
+          type="password"
+          label="New Password"
+          required
+          disabled={isPending}
+          placeholder="Enter new password"
+          error={state?.errors?.newPassword?.[0]}
+          hint="Must be at least 8 characters long with letters and numbers."
+          startIcon={
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+          }
+        />
 
-        {/* Confirm Password */}
-        <div>
-          <label
-            htmlFor="confirmPassword"
-            className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1.5"
-          >
-            Confirm New Password <span className="text-error" aria-hidden="true">*</span>
-          </label>
-          <div className="relative">
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type={showConfirm ? "text" : "password"}
-              required
-              minLength={8}
-              disabled={isPending}
-              placeholder="Repeat your new password"
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-card text-text-main text-sm focus-ring disabled:opacity-50 pr-10"
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirm(!showConfirm)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-subtle hover:text-text-main p-1"
-              aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
-            >
-              {showConfirm ? (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
+        {/* Confirm New Password */}
+        <Input
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          label="Confirm New Password"
+          required
+          disabled={isPending}
+          placeholder="Re-enter new password"
+          error={state?.errors?.confirmPassword?.[0]}
+          startIcon={
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          }
+        />
 
-        <div className="pt-2">
+        <div className="pt-2 flex justify-end">
           <button
             type="submit"
             disabled={isPending}
-            className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-xs uppercase tracking-widest transition-all shadow-sm focus-ring disabled:opacity-50"
+            className="py-2.5 px-6 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium text-xs uppercase tracking-widest transition-all shadow-sm focus-ring disabled:opacity-50 cursor-pointer flex items-center gap-2"
           >
             {isPending ? "Updating Password..." : "Update Password"}
           </button>
@@ -188,4 +119,3 @@ export const ChangePasswordForm: React.FC = () => {
 };
 
 export default ChangePasswordForm;
-

@@ -8,6 +8,8 @@ import {
   setDefaultAddressAction,
 } from "@/app/actions/customer.actions";
 import { ActionState } from "@/lib/auth/types";
+import { Input } from "@/components/ui/Input";
+import { Checkbox } from "@/components/ui/Checkbox";
 
 export interface AddressManagerProps {
   initialAddresses: CustomerAddress[];
@@ -15,6 +17,7 @@ export interface AddressManagerProps {
 
 /**
  * Interactive Address Book manager component supporting address creation, deletion, and default toggling.
+ * Features luxury boutique layout and animated lightning shooting star form inputs.
  */
 export const AddressManager: React.FC<AddressManagerProps> = ({
   initialAddresses,
@@ -67,7 +70,7 @@ export const AddressManager: React.FC<AddressManagerProps> = ({
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="self-start sm:self-auto px-5 py-2.5 rounded-xl bg-primary text-primary-contrast text-xs uppercase tracking-wider font-semibold hover:bg-primary-hover transition-colors shadow-sm focus-ring flex items-center gap-2"
+          className="self-start sm:self-auto px-5 py-2.5 rounded-xl bg-primary text-primary-contrast text-xs uppercase tracking-wider font-semibold hover:bg-primary-hover transition-colors shadow-sm focus-ring flex items-center gap-2 cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
@@ -89,70 +92,76 @@ export const AddressManager: React.FC<AddressManagerProps> = ({
               clipRule="evenodd"
             />
           </svg>
-          <p className="font-medium">{createState.message}</p>
+          <span>{createState.message}</span>
         </div>
       )}
 
-      {initialAddresses.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* Addresses Grid */}
+      {initialAddresses && initialAddresses.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {initialAddresses.map((address) => (
             <div
               key={address.id}
-              className={`p-5 rounded-2xl border relative flex flex-col justify-between transition-all ${
+              className={`p-5 rounded-2xl border transition-all duration-200 relative flex flex-col justify-between ${
                 address.isDefault
-                  ? "border-primary bg-surface-soft/60 shadow-sm"
-                  : "border-border bg-surface-card hover:border-accent"
+                  ? "border-accent bg-surface-card shadow-xs ring-1 ring-accent/30"
+                  : "border-border bg-surface-card hover:border-accent/40"
               }`}
             >
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-bold text-sm text-text-main">
-                    {address.fullName}
-                  </span>
-                  {address.isDefault ? (
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-contrast">
-                      Default
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-text-main text-sm">
+                      {address.firstName} {address.lastName}
                     </span>
-                  ) : null}
+                    {address.isDefault && (
+                      <span className="px-2 py-0.5 rounded-full bg-surface-tint/40 text-primary text-[10px] font-bold uppercase tracking-wider">
+                        Default
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-text-subtle capitalize">
+                    {address.city}
+                  </span>
                 </div>
 
-                <address className="not-italic text-xs text-text-secondary space-y-1 leading-relaxed">
-                  <p>{address.addressLine1}</p>
-                  {address.addressLine2 && <p>{address.addressLine2}</p>}
+                <div className="text-xs text-text-secondary space-y-0.5 leading-relaxed">
+                  <p>{address.address1}</p>
+                  {address.address2 && <p>{address.address2}</p>}
                   <p>
-                    {address.city}, {address.state} {address.postalCode}
+                    {address.city}, {address.state} - {address.postalCode}
                   </p>
                   <p>{address.country}</p>
                   {address.phone && (
-                    <p className="pt-2 text-text-subtle font-medium">
-                      Phone: {address.phone}
+                    <p className="pt-2 text-text-subtle font-medium flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                      {address.phone}
                     </p>
                   )}
-                </address>
+                </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="mt-5 pt-3 border-t border-border/80 flex items-center justify-between gap-3">
+              <div className="mt-5 pt-3 border-t border-border/60 flex items-center justify-between gap-3">
                 {!address.isDefault ? (
                   <button
                     type="button"
                     onClick={() => handleSetDefault(address.id)}
                     disabled={settingDefaultId === address.id}
-                    className="text-xs font-semibold text-accent hover:text-accent-hover transition-colors focus-ring disabled:opacity-50"
+                    className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors focus-ring disabled:opacity-50 cursor-pointer"
                   >
-                    {settingDefaultId === address.id ? "Setting..." : "Set as Default"}
+                    {settingDefaultId === address.id ? "Updating..." : "Make Default"}
                   </button>
                 ) : (
-                  <span className="text-[11px] text-text-subtle font-medium">
-                    Primary Destination
-                  </span>
+                  <span className="text-xs text-text-subtle italic">Primary destination</span>
                 )}
 
                 <button
                   type="button"
                   onClick={() => handleDelete(address.id)}
                   disabled={deletingId === address.id}
-                  className="text-xs font-semibold text-text-subtle hover:text-error transition-colors focus-ring disabled:opacity-50"
+                  className="text-xs font-semibold text-text-subtle hover:text-error transition-colors focus-ring disabled:opacity-50 cursor-pointer"
                 >
                   {deletingId === address.id ? "Removing..." : "Remove"}
                 </button>
@@ -175,7 +184,7 @@ export const AddressManager: React.FC<AddressManagerProps> = ({
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="inline-block px-6 py-2.5 rounded-xl bg-primary text-primary-contrast text-xs uppercase tracking-wider font-semibold hover:bg-primary-hover transition-colors focus-ring"
+            className="inline-block px-6 py-2.5 rounded-xl bg-primary text-primary-contrast text-xs uppercase tracking-wider font-semibold hover:bg-primary-hover transition-colors focus-ring cursor-pointer"
           >
             Add Your First Address
           </button>
@@ -198,7 +207,7 @@ export const AddressManager: React.FC<AddressManagerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-lg text-text-subtle hover:text-text-main hover:bg-surface-soft transition-colors focus-ring"
+                className="p-1 rounded-lg text-text-subtle hover:text-text-main hover:bg-surface-soft transition-colors focus-ring cursor-pointer"
                 aria-label="Close modal"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -209,145 +218,99 @@ export const AddressManager: React.FC<AddressManagerProps> = ({
 
             <form action={formAction} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="address-firstName" className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1">
-                    First Name <span className="text-error" aria-hidden="true">*</span>
-                  </label>
-                  <input
-                    id="address-firstName"
-                    name="firstName"
-                    type="text"
-                    required
-                    disabled={isCreating}
-                    className="w-full px-3.5 py-2 rounded-xl border border-border bg-surface-card text-text-main text-xs focus-ring"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="address-lastName" className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1">
-                    Last Name <span className="text-error" aria-hidden="true">*</span>
-                  </label>
-                  <input
-                    id="address-lastName"
-                    name="lastName"
-                    type="text"
-                    required
-                    disabled={isCreating}
-                    className="w-full px-3.5 py-2 rounded-xl border border-border bg-surface-card text-text-main text-xs focus-ring"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="address-line1" className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1">
-                  Street Address <span className="text-error" aria-hidden="true">*</span>
-                </label>
-                <input
-                  id="address-line1"
-                  name="address1"
+                <Input
+                  id="address-firstName"
+                  name="firstName"
                   type="text"
-                  placeholder="Flat / Villa / House No., Street, Landmark"
+                  label="First Name"
                   required
                   disabled={isCreating}
-                  className="w-full px-3.5 py-2 rounded-xl border border-border bg-surface-card text-text-main text-xs focus-ring"
+                />
+                <Input
+                  id="address-lastName"
+                  name="lastName"
+                  type="text"
+                  label="Last Name"
+                  required
+                  disabled={isCreating}
                 />
               </div>
 
-              <div>
-                <label htmlFor="address-line2" className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1">
-                  Apartment / Suite <span className="text-text-subtle font-normal text-[10px]">(Optional)</span>
-                </label>
-                <input
-                  id="address-line2"
-                  name="address2"
-                  type="text"
-                  disabled={isCreating}
-                  className="w-full px-3.5 py-2 rounded-xl border border-border bg-surface-card text-text-main text-xs focus-ring"
-                />
-              </div>
+              <Input
+                id="address-line1"
+                name="address1"
+                type="text"
+                label="Street Address"
+                placeholder="Flat / Villa / House No., Street, Landmark"
+                required
+                disabled={isCreating}
+              />
+
+              <Input
+                id="address-line2"
+                name="address2"
+                type="text"
+                label="Apartment / Suite"
+                optional
+                disabled={isCreating}
+              />
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <div>
-                  <label htmlFor="address-city" className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1">
-                    City <span className="text-error" aria-hidden="true">*</span>
-                  </label>
-                  <input
-                    id="address-city"
-                    name="city"
-                    type="text"
-                    required
-                    disabled={isCreating}
-                    className="w-full px-3.5 py-2 rounded-xl border border-border bg-surface-card text-text-main text-xs focus-ring"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="address-state" className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1">
-                    State <span className="text-error" aria-hidden="true">*</span>
-                  </label>
-                  <input
-                    id="address-state"
-                    name="state"
-                    type="text"
-                    required
-                    disabled={isCreating}
-                    className="w-full px-3.5 py-2 rounded-xl border border-border bg-surface-card text-text-main text-xs focus-ring"
-                  />
-                </div>
+                <Input
+                  id="address-city"
+                  name="city"
+                  type="text"
+                  label="City"
+                  required
+                  disabled={isCreating}
+                />
+                <Input
+                  id="address-state"
+                  name="state"
+                  type="text"
+                  label="State"
+                  required
+                  disabled={isCreating}
+                />
                 <div className="col-span-2 sm:col-span-1">
-                  <label htmlFor="address-postalCode" className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1">
-                    Pincode <span className="text-error" aria-hidden="true">*</span>
-                  </label>
-                  <input
+                  <Input
                     id="address-postalCode"
                     name="postalCode"
                     type="text"
+                    label="Pincode"
                     required
                     disabled={isCreating}
-                    className="w-full px-3.5 py-2 rounded-xl border border-border bg-surface-card text-text-main text-xs focus-ring"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="address-country" className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1">
-                    Country
-                  </label>
-                  <input
-                    id="address-country"
-                    name="country"
-                    type="text"
-                    defaultValue="India"
-                    required
-                    disabled={isCreating}
-                    className="w-full px-3.5 py-2 rounded-xl border border-border bg-surface-card text-text-main text-xs focus-ring"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="address-phone" className="block text-xs uppercase tracking-wider font-semibold text-text-main mb-1">
-                    Phone for Delivery
-                  </label>
-                  <input
-                    id="address-phone"
-                    name="phone"
-                    type="tel"
-                    placeholder="+91 98765 43210"
-                    disabled={isCreating}
-                    className="w-full px-3.5 py-2 rounded-xl border border-border bg-surface-card text-text-main text-xs focus-ring"
-                  />
-                </div>
+                <Input
+                  id="address-country"
+                  name="country"
+                  type="text"
+                  label="Country"
+                  defaultValue="India"
+                  required
+                  disabled={isCreating}
+                />
+                <Input
+                  id="address-phone"
+                  name="phone"
+                  type="tel"
+                  label="Phone for Delivery"
+                  placeholder="+91 98765 43210"
+                  disabled={isCreating}
+                />
               </div>
 
-              <div className="pt-2 flex items-center gap-2">
-                <input
+              <div className="pt-2">
+                <Checkbox
                   id="address-isDefault"
                   name="isDefault"
-                  type="checkbox"
                   disabled={isCreating}
-                  className="rounded border-border text-primary focus:ring-accent"
+                  label="Set as default shipping address"
                 />
-                <label htmlFor="address-isDefault" className="text-xs text-text-secondary cursor-pointer">
-                  Set as default shipping address
-                </label>
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-border">
@@ -355,14 +318,14 @@ export const AddressManager: React.FC<AddressManagerProps> = ({
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   disabled={isCreating}
-                  className="px-4 py-2 rounded-xl border border-border text-xs uppercase tracking-wider font-semibold text-text-secondary hover:bg-surface-soft transition-colors focus-ring"
+                  className="px-4 py-2 rounded-xl border border-border text-xs uppercase tracking-wider font-semibold text-text-secondary hover:bg-surface-soft transition-colors focus-ring cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isCreating}
-                  className="px-6 py-2 rounded-xl bg-primary text-primary-contrast text-xs uppercase tracking-widest font-semibold hover:bg-primary-hover transition-colors shadow-sm focus-ring disabled:opacity-50"
+                  className="px-6 py-2 rounded-xl bg-primary text-primary-contrast text-xs uppercase tracking-widest font-semibold hover:bg-primary-hover transition-colors shadow-sm focus-ring disabled:opacity-50 cursor-pointer"
                 >
                   {isCreating ? "Saving..." : "Save Address"}
                 </button>
@@ -376,4 +339,3 @@ export const AddressManager: React.FC<AddressManagerProps> = ({
 };
 
 export default AddressManager;
-
