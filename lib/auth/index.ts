@@ -1,10 +1,10 @@
 import NextAuth from "next-auth";
-import { getToken } from "next-auth/jwt";
+import { getToken, encode } from "next-auth/jwt";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { authConfig } from "./auth.config";
-import { SafeUser, UserRole } from "./types";
-import { logoutUser } from "../api/auth.api";
+import { BackendTokens, SafeUser, UserRole } from "./types";
+import { logoutUser, refreshAccessToken } from "../api/auth.api";
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
 
@@ -22,22 +22,113 @@ export const getCurrentUser = async (): Promise<SafeUser | null> => {
 
 /**
  * Server-only helper to safely retrieve the backend access token for API communications.
+ * Checks token expiration and automatically executes rotation/refresh when expired or
+ * close to expiry (within 60 seconds of expiration).
+ * In Server Actions or Route Handlers, writes the newly encrypted session cookie back to the response.
+ * In Server Components, safely returns the fresh access token for immediate API fetching.
  * Never exposed to client-side bundles.
  */
-export const getServerAccessToken = async (): Promise<string | null> => {
+export const getServerAccessToken = async (options?: {
+  forceRefresh?: boolean;
+}): Promise<string | null> => {
   const reqCookies = await cookies();
   const reqHeaders = await headers();
 
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  if (!secret) {
+    return null;
+  }
+
+  // Decrypt current session token from cookie
   const token = await getToken({
     req: {
       headers: Object.fromEntries(reqHeaders.entries()),
       cookies: Object.fromEntries(reqCookies.getAll().map((c) => [c.name, c.value])),
     } as unknown as Request,
-    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    secret,
   });
 
-  const backendTokens = token?.backendTokens as { accessToken?: string } | undefined;
-  return backendTokens?.accessToken || null;
+  if (!token) {
+    return null;
+  }
+
+  const backendTokens = token.backendTokens as BackendTokens | undefined;
+  if (!backendTokens?.accessToken) {
+    return null;
+  }
+
+  // Check if token is still valid (with a 60-second grace window)
+  const isExpiringSoon =
+    options?.forceRefresh ||
+    !backendTokens.accessTokenExpiresAt ||
+    Date.now() >= backendTokens.accessTokenExpiresAt - 60_000;
+
+  if (!isExpiringSoon) {
+    return backendTokens.accessToken;
+  }
+
+  // If expired or expiring soon, refresh token via backend refresh endpoint
+  if (!backendTokens.refreshToken) {
+    return null;
+  }
+
+  try {
+    const refreshed = await refreshAccessToken(backendTokens.refreshToken);
+    const updatedBackendTokens: BackendTokens = {
+      accessToken: refreshed.accessToken,
+      refreshToken: refreshed.refreshToken,
+      accessTokenExpiresAt: Date.now() + 14 * 60 * 1000,
+    };
+
+    token.backendTokens = updatedBackendTokens;
+    if (refreshed.user) {
+      token.user = refreshed.user;
+    }
+
+    // Attempt to persist the rotated token in the session cookie if supported in current context
+    // (Allowed in Server Actions and Route Handlers; safely caught in Server Component render phase)
+    try {
+      const isSecure =
+        process.env.NODE_ENV === "production" &&
+        !reqHeaders.get("host")?.includes("localhost");
+
+      const cookieName = isSecure
+        ? "__Secure-authjs.session-token"
+        : "authjs.session-token";
+      const fallbackCookieName = isSecure
+        ? "__Secure-next-auth.session-token"
+        : "next-auth.session-token";
+
+      const activeCookieName = reqCookies.get(cookieName)
+        ? cookieName
+        : reqCookies.get(fallbackCookieName)
+        ? fallbackCookieName
+        : cookieName;
+
+      const encodedToken = await encode({
+        token,
+        secret,
+        salt: activeCookieName,
+        maxAge: 7 * 24 * 60 * 60,
+      });
+
+      reqCookies.set(activeCookieName, encodedToken, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isSecure,
+        maxAge: 7 * 24 * 60 * 60,
+      });
+    } catch {
+      // Cookies cannot be mutated in Server Components during render.
+      // The refreshed accessToken is returned directly for use in the current render.
+    }
+
+    return refreshed.accessToken;
+  } catch (error) {
+    console.warn("Unable to refresh backend access token:", error);
+    return null;
+  }
 };
 
 /**

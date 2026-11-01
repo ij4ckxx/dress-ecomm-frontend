@@ -127,20 +127,42 @@ export const getCustomerProfile = async (
     });
 
     if (!res.ok) return null;
-    const json: BackendApiResponse<{ user?: CustomerProfile; customer?: CustomerProfile }> =
-      await res.json();
-    return json.data?.user || json.data?.customer || null;
+    const json: BackendApiResponse<{
+      account?: CustomerProfile & { firstName?: string; lastName?: string; phoneNumber?: string };
+      user?: CustomerProfile & { firstName?: string; lastName?: string; phoneNumber?: string };
+      customer?: CustomerProfile & { firstName?: string; lastName?: string; phoneNumber?: string };
+    }> = await res.json();
+
+    const account = json.data?.account || json.data?.user || json.data?.customer;
+    if (!account) return null;
+
+    return {
+      id: account.id,
+      name: account.name || `${account.firstName || ""} ${account.lastName || ""}`.trim(),
+      email: account.email,
+      phone: account.phone || account.phoneNumber || null,
+      avatarUrl: account.avatarUrl || null,
+      role: account.role || "USER",
+      createdAt: account.createdAt,
+    };
   } catch {
     return null;
   }
 };
 
 /**
- * Updates the authenticated customer profile.
+ * Updates the authenticated customer profile via JSON payload.
  */
 export const updateCustomerProfile = async (
   accessToken: string,
-  data: { name: string; phone?: string; avatarUrl?: string }
+  data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    phoneNumber?: string;
+    avatarUrl?: string;
+  }
 ): Promise<CustomerProfile> => {
   const baseUrl = getBackendBaseUrl();
   const res = await fetch(`${baseUrl}/customer/account`, {
@@ -153,18 +175,74 @@ export const updateCustomerProfile = async (
     cache: "no-store",
   });
 
-  const json: BackendApiResponse<{ user?: CustomerProfile; customer?: CustomerProfile }> =
-    await res.json();
+  const json: BackendApiResponse<{
+    account?: CustomerProfile & { firstName?: string; lastName?: string; phoneNumber?: string };
+    user?: CustomerProfile & { firstName?: string; lastName?: string; phoneNumber?: string };
+    customer?: CustomerProfile & { firstName?: string; lastName?: string; phoneNumber?: string };
+  }> = await res.json();
+
   if (!res.ok || !json.success) {
     throw new Error(json.message || "Failed to update profile");
   }
 
-  const updated = json.data?.user || json.data?.customer;
+  const updated = json.data?.account || json.data?.user || json.data?.customer;
   if (!updated) {
     throw new Error("Invalid response from server");
   }
 
-  return updated;
+  return {
+    id: updated.id,
+    name: updated.name || `${updated.firstName || ""} ${updated.lastName || ""}`.trim(),
+    email: updated.email,
+    phone: updated.phone || updated.phoneNumber || null,
+    avatarUrl: updated.avatarUrl || null,
+    role: updated.role || "USER",
+    createdAt: updated.createdAt,
+  };
+};
+
+/**
+ * Updates the authenticated customer profile via multipart/form-data
+ * supporting direct avatar image uploads to Cloudinary.
+ */
+export const updateCustomerProfileWithFormData = async (
+  accessToken: string,
+  formData: FormData
+): Promise<CustomerProfile> => {
+  const baseUrl = getBackendBaseUrl();
+  const res = await fetch(`${baseUrl}/customer/account`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: formData,
+    cache: "no-store",
+  });
+
+  const json: BackendApiResponse<{
+    account?: CustomerProfile & { firstName?: string; lastName?: string; phoneNumber?: string };
+    user?: CustomerProfile & { firstName?: string; lastName?: string; phoneNumber?: string };
+    customer?: CustomerProfile & { firstName?: string; lastName?: string; phoneNumber?: string };
+  }> = await res.json();
+
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "Failed to upload avatar and update profile");
+  }
+
+  const updated = json.data?.account || json.data?.user || json.data?.customer;
+  if (!updated) {
+    throw new Error("Invalid response from server");
+  }
+
+  return {
+    id: updated.id,
+    name: updated.name || `${updated.firstName || ""} ${updated.lastName || ""}`.trim(),
+    email: updated.email,
+    phone: updated.phone || updated.phoneNumber || null,
+    avatarUrl: updated.avatarUrl || null,
+    role: updated.role || "USER",
+    createdAt: updated.createdAt,
+  };
 };
 
 /**

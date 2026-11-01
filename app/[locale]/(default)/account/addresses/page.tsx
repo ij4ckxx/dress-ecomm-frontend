@@ -8,8 +8,15 @@ import { AddressManager } from "@/components/account/AddressManager";
  */
 export default async function AccountAddressesPage() {
   await requireAuth();
-  const token = await getServerAccessToken();
-  const addresses = token ? await getCustomerAddresses(token) : [];
+  let token = await getServerAccessToken();
+  let addresses = token ? await getCustomerAddresses(token) : [];
+
+  if (addresses.length === 0 && token) {
+    const refreshedToken = await getServerAccessToken({ forceRefresh: true });
+    if (refreshedToken) {
+      addresses = await getCustomerAddresses(refreshedToken);
+    }
+  }
 
   return (
     <div className="bg-surface-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">

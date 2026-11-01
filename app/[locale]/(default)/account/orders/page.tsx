@@ -8,8 +8,15 @@ import { getCustomerOrders } from "@/lib/api/customer.api";
  */
 export default async function AccountOrdersPage() {
   await requireAuth();
-  const token = await getServerAccessToken();
-  const orders = token ? await getCustomerOrders(token) : [];
+  let token = await getServerAccessToken();
+  let orders = token ? await getCustomerOrders(token) : [];
+
+  if (orders.length === 0 && token) {
+    const refreshedToken = await getServerAccessToken({ forceRefresh: true });
+    if (refreshedToken) {
+      orders = await getCustomerOrders(refreshedToken);
+    }
+  }
 
   return (
     <div className="bg-surface-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getServerAccessToken, requireAuth } from "@/lib/auth";
 import {
   updateCustomerProfile,
+  updateCustomerProfileWithFormData,
   changeCustomerPassword,
   createCustomerAddress,
   deleteCustomerAddress,
@@ -14,36 +15,115 @@ import {
 import { ActionState } from "@/lib/auth/types";
 
 /**
+ * Reusable helper executing an authenticated customer operation.
+ * Automatically attempts token rotation and retries the operation once
+ * if an "Invalid or expired access token" error is returned by the backend.
+ */
+async function withTokenRetry<T>(
+  operation: (token: string) => Promise<T>
+): Promise<T> {
+  const initialToken = await getServerAccessToken();
+  if (!initialToken) {
+    throw new Error("Session expired. Please log in again.");
+  }
+
+  try {
+    return await operation(initialToken);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message.toLowerCase() : "";
+    const isTokenError =
+      message.includes("invalid or expired access token") ||
+      message.includes("invalid_token") ||
+      message.includes("unauthorized");
+
+    if (isTokenError) {
+      const refreshedToken = await getServerAccessToken({ forceRefresh: true });
+      if (refreshedToken) {
+        return await operation(refreshedToken);
+      }
+    }
+    throw error;
+  }
+}
+
+/**
  * Server action to update customer personal profile details.
+ * Supports firstName, lastName, email, phone, and avatar upload to Cloudinary.
  */
 export const updateProfileAction = async (
   _prevState: ActionState | null,
   formData: FormData
 ): Promise<ActionState> => {
   await requireAuth();
-  const accessToken = await getServerAccessToken();
 
-  if (!accessToken) {
+  // Extract fields
+  const firstName = (formData.get("firstName") as string)?.trim() || "";
+  const lastName = (formData.get("lastName") as string)?.trim() || "";
+  const email = (formData.get("email") as string)?.trim()?.toLowerCase() || "";
+  const phone = (formData.get("phone") as string)?.trim() || "";
+  const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || "";
+  const avatarFile = formData.get("avatar") as File | null;
+
+  if (!firstName) {
     return {
       success: false,
-      message: "Session expired. Please log in again.",
+      message: "First name is required.",
+      errors: { firstName: ["First name is required."] },
     };
   }
 
-  const name = formData.get("name") as string;
-  const phone = formData.get("phone") as string;
-
-  if (!name || name.trim().length < 2) {
+  if (!lastName) {
     return {
       success: false,
-      message: "Full name must be at least 2 characters.",
+      message: "Last name is required.",
+      errors: { lastName: ["Last name is required."] },
+    };
+  }
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return {
+      success: false,
+      message: "A valid email address is required.",
+      errors: { email: ["Please enter a valid email address."] },
+    };
+  }
+
+  if (phone && !/^[+]?[0-9\s\-()]{7,20}$/.test(phone)) {
+    return {
+      success: false,
+      message: "Please enter a valid phone number (7-20 digits).",
+      errors: { phone: ["Please enter a valid phone number (7-20 digits)."] },
     };
   }
 
   try {
-    await updateCustomerProfile(accessToken, {
-      name: name.trim(),
-      phone: phone ? phone.trim() : undefined,
+    const hasValidFile =
+      avatarFile instanceof File &&
+      avatarFile.size > 0 &&
+      avatarFile.name !== "undefined" &&
+      avatarFile.name !== "";
+
+    await withTokenRetry(async (token) => {
+      if (hasValidFile) {
+        // Build multipart FormData for direct Cloudinary upload via backend
+        const uploadData = new FormData();
+        uploadData.append("firstName", firstName);
+        uploadData.append("lastName", lastName);
+        uploadData.append("email", email);
+        if (phone) uploadData.append("phone", phone);
+        uploadData.append("avatar", avatarFile);
+
+        await updateCustomerProfileWithFormData(token, uploadData);
+      } else {
+        // JSON update
+        await updateCustomerProfile(token, {
+          firstName,
+          lastName,
+          email,
+          phone: phone || undefined,
+          avatarUrl: avatarUrl || undefined,
+        });
+      }
     });
 
     revalidatePath("/account/profile");
@@ -51,7 +131,7 @@ export const updateProfileAction = async (
 
     return {
       success: true,
-      message: "Your profile has been updated successfully.",
+      message: "Your profile details have been saved successfully.",
     };
   } catch (error) {
     return {
@@ -69,14 +149,6 @@ export const changePasswordAction = async (
   formData: FormData
 ): Promise<ActionState> => {
   await requireAuth();
-  const accessToken = await getServerAccessToken();
-
-  if (!accessToken) {
-    return {
-      success: false,
-      message: "Session expired. Please log in again.",
-    };
-  }
 
   const currentPassword = (formData.get("currentPassword") as string) || "";
   const newPassword = (formData.get("newPassword") as string) || "";
@@ -118,9 +190,11 @@ export const changePasswordAction = async (
   }
 
   try {
-    const res = await changeCustomerPassword(accessToken, {
-      currentPassword,
-      newPassword,
+    const res = await withTokenRetry(async (token) => {
+      return await changeCustomerPassword(token, {
+        currentPassword,
+        newPassword,
+      });
     });
 
     return {
@@ -177,17 +251,19 @@ export const createAddressAction = async (
   }
 
   try {
-    await createCustomerAddress(accessToken, {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      address1: address1.trim(),
-      address2: address2.trim() || undefined,
-      city: city.trim(),
-      state: state.trim(),
-      postalCode: postalCode.trim(),
-      country: country.trim(),
-      phone: phone.trim() || undefined,
-      isDefault,
+    await withTokenRetry(async (token) => {
+      await createCustomerAddress(token, {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        address1: address1.trim(),
+        address2: address2.trim() || undefined,
+        city: city.trim(),
+        state: state.trim(),
+        postalCode: postalCode.trim(),
+        country: country.trim(),
+        phone: phone.trim() || undefined,
+        isDefault,
+      });
     });
 
     revalidatePath("/account/addresses");
@@ -212,17 +288,11 @@ export const deleteAddressAction = async (
   addressId: string
 ): Promise<ActionState> => {
   await requireAuth();
-  const accessToken = await getServerAccessToken();
-
-  if (!accessToken) {
-    return {
-      success: false,
-      message: "Session expired. Please log in again.",
-    };
-  }
 
   try {
-    await deleteCustomerAddress(accessToken, addressId);
+    await withTokenRetry(async (token) => {
+      await deleteCustomerAddress(token, addressId);
+    });
     revalidatePath("/account/addresses");
     revalidatePath("/account");
 
@@ -245,17 +315,11 @@ export const setDefaultAddressAction = async (
   addressId: string
 ): Promise<ActionState> => {
   await requireAuth();
-  const accessToken = await getServerAccessToken();
-
-  if (!accessToken) {
-    return {
-      success: false,
-      message: "Session expired. Please log in again.",
-    };
-  }
 
   try {
-    await setDefaultCustomerAddress(accessToken, addressId);
+    await withTokenRetry(async (token) => {
+      await setDefaultCustomerAddress(token, addressId);
+    });
     revalidatePath("/account/addresses");
     revalidatePath("/account");
 
@@ -278,17 +342,11 @@ export const removeWishlistItemAction = async (
   productId: string
 ): Promise<ActionState> => {
   await requireAuth();
-  const accessToken = await getServerAccessToken();
-
-  if (!accessToken) {
-    return {
-      success: false,
-      message: "Session expired. Please log in again.",
-    };
-  }
 
   try {
-    await removeWishlistItem(accessToken, productId);
+    await withTokenRetry(async (token) => {
+      await removeWishlistItem(token, productId);
+    });
     revalidatePath("/account/wishlist");
     revalidatePath("/account");
 
