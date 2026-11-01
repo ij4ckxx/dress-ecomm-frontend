@@ -1,10 +1,22 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MobileHeaderNavProps } from "./types";
 import { NAV_HIGHLIGHTS } from "./constants";
+
+/**
+ * Returns initials from customer name.
+ */
+const getInitials = (name?: string | null): string => {
+  if (!name) return "SS";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return parts[0].slice(0, 2).toUpperCase();
+};
 
 /**
  * Mobile responsive navigation drawer providing access to dynamic categories,
@@ -20,13 +32,17 @@ export const MobileHeaderNav: React.FC<MobileHeaderNavProps> = ({
   categories = [],
 }) => {
   const pathname = usePathname();
+  const prevPathnameRef = useRef(pathname);
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
 
   const displayCategories = categories || [];
 
-  // Close drawer on path change
+  // Close drawer ONLY when navigation route changes, never on initial mount or re-render
   useEffect(() => {
-    onClose();
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      onClose();
+    }
   }, [pathname, onClose]);
 
   // Lock body scroll when drawer is open
@@ -51,7 +67,7 @@ export const MobileHeaderNav: React.FC<MobileHeaderNavProps> = ({
     <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-text-main/40 backdrop-blur-xs transition-opacity duration-200"
+        className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -185,25 +201,60 @@ export const MobileHeaderNav: React.FC<MobileHeaderNavProps> = ({
           <div className="pt-4">
             {currentUser ? (
               <div className="flex flex-col gap-2">
-                <p className="text-xs text-text-subtle">
-                  Signed in as{" "}
-                  <span className="font-semibold text-text-main">
-                    {currentUser.name || currentUser.email}
-                  </span>
-                </p>
+                <div className="flex items-center gap-3 pb-3 mb-1 border-b border-border/60">
+                  {currentUser.avatarUrl ? (
+                    <img
+                      src={currentUser.avatarUrl}
+                      alt={currentUser.name || "Customer Portrait"}
+                      className="w-10 h-10 rounded-full object-cover border border-primary/20 shrink-0 shadow-2xs"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0">
+                      {getInitials(currentUser.name)}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-text-subtle uppercase tracking-wider">Signed in as</p>
+                    <p className="font-semibold text-text-main text-sm truncate">
+                      {currentUser.name || currentUser.email}
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/account"
+                  onClick={onClose}
+                  className="py-1.5 text-sm font-semibold text-text-main hover:text-primary transition-colors"
+                >
+                  Account Center
+                </Link>
                 <Link
                   href="/account/profile"
                   onClick={onClose}
-                  className="py-1.5 text-sm text-text-secondary hover:text-primary"
+                  className="py-1 text-sm text-text-secondary hover:text-primary transition-colors"
                 >
-                  My Profile
+                  Account Details
                 </Link>
                 <Link
                   href="/account/orders"
                   onClick={onClose}
-                  className="py-1.5 text-sm text-text-secondary hover:text-primary"
+                  className="py-1 text-sm text-text-secondary hover:text-primary transition-colors"
                 >
                   My Orders
+                </Link>
+                <Link
+                  href="/account/addresses"
+                  onClick={onClose}
+                  className="py-1 text-sm text-text-secondary hover:text-primary transition-colors"
+                >
+                  Addresses
+                </Link>
+                <Link
+                  href="/account/wishlist"
+                  onClick={onClose}
+                  className="py-1 text-sm text-text-secondary hover:text-primary transition-colors"
+                >
+                  Favorites and Lists
                 </Link>
               </div>
             ) : (

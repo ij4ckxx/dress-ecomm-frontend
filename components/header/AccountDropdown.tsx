@@ -44,9 +44,17 @@ export const AccountDropdown: React.FC<AccountDropdownProps> = ({
         <>
           {/* User Profile Header */}
           <div className="px-4 py-3 border-b border-border/80 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0">
-              {getInitials(currentUser.name)}
-            </div>
+            {currentUser.avatarUrl ? (
+              <img
+                src={currentUser.avatarUrl}
+                alt={currentUser.name || "Customer Portrait"}
+                className="w-10 h-10 rounded-full object-cover border border-primary/20 shadow-xs shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0">
+                {getInitials(currentUser.name)}
+              </div>
+            )}
             <div className="min-w-0">
               <p className="text-sm font-semibold text-text-main truncate">
                 {currentUser.name || "Valued Customer"}

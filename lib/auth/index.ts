@@ -132,6 +132,72 @@ export const getServerAccessToken = async (options?: {
 };
 
 /**
+ * Server-only helper to update the authenticated user's session cookie with fresh profile data.
+ * Must be called in Server Actions or Route Handlers where cookies can be mutated.
+ */
+export const updateServerSessionUser = async (
+  updatedUser: Partial<SafeUser>
+): Promise<void> => {
+  const reqCookies = await cookies();
+  const reqHeaders = await headers();
+
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  if (!secret) return;
+
+  const token = await getToken({
+    req: {
+      headers: Object.fromEntries(reqHeaders.entries()),
+      cookies: Object.fromEntries(reqCookies.getAll().map((c) => [c.name, c.value])),
+    } as unknown as Request,
+    secret,
+  });
+
+  if (!token || !token.user) return;
+
+  const currentSafe = token.user as SafeUser;
+  token.user = {
+    ...currentSafe,
+    ...updatedUser,
+  };
+
+  try {
+    const isSecure =
+      process.env.NODE_ENV === "production" &&
+      !reqHeaders.get("host")?.includes("localhost");
+
+    const cookieName = isSecure
+      ? "__Secure-authjs.session-token"
+      : "authjs.session-token";
+    const fallbackCookieName = isSecure
+      ? "__Secure-next-auth.session-token"
+      : "next-auth.session-token";
+
+    const activeCookieName = reqCookies.get(cookieName)
+      ? cookieName
+      : reqCookies.get(fallbackCookieName)
+      ? fallbackCookieName
+      : cookieName;
+
+    const encodedToken = await encode({
+      token,
+      secret,
+      salt: activeCookieName,
+      maxAge: 7 * 24 * 60 * 60,
+    });
+
+    reqCookies.set(activeCookieName, encodedToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      secure: isSecure,
+      maxAge: 7 * 24 * 60 * 60,
+    });
+  } catch (error) {
+    console.warn("Could not persist session update to cookies:", error);
+  }
+};
+
+/**
  * Requires an authenticated user session.
  * Redirects to the login page if unauthenticated.
  */

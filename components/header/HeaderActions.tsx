@@ -81,25 +81,33 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
           <button
             type="button"
             onClick={() => setDropdownOpen((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-text-secondary hover:text-primary transition-colors p-1 rounded-md focus:outline-none focus:ring-1 focus:ring-accent/40"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm text-text-secondary hover:text-primary transition-colors p-1 rounded-md focus:outline-none focus:ring-1 focus:ring-accent/40"
             aria-expanded={dropdownOpen}
             aria-haspopup="true"
           >
-            <svg
-              className="w-5 h-5 text-text-main"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.8}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+            {currentUser.avatarUrl ? (
+              <img
+                src={currentUser.avatarUrl}
+                alt={currentUser.name || "Customer Portrait"}
+                className="w-6 h-6 rounded-full object-cover border border-primary/30 shrink-0 shadow-2xs"
               />
-            </svg>
-            <span className="font-medium hidden sm:inline truncate max-w-[100px]">
-              {currentUser.name ? currentUser.name.split(" ")[0] : "Account"}
+            ) : (
+              <svg
+                className="w-5 h-5 text-text-main"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.8}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                />
+              </svg>
+            )}
+            <span className="font-medium hidden sm:inline truncate max-w-[120px]">
+              {currentUser.name || "Account"}
             </span>
             <svg
               className={`w-3 h-3 text-text-subtle transition-transform duration-150 ${

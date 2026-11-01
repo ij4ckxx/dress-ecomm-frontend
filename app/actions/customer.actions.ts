@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getServerAccessToken, requireAuth } from "@/lib/auth";
+import { getServerAccessToken, requireAuth, updateServerSessionUser } from "@/lib/auth";
 import {
+  CustomerProfile,
   updateCustomerProfile,
   updateCustomerProfileWithFormData,
   changeCustomerPassword,
@@ -45,6 +46,20 @@ async function withTokenRetry<T>(
     throw error;
   }
 }
+
+/**
+ * Server action to synchronize session cookie with fresh customer profile data.
+ * Ensures header portrait avatar and full name reflect immediate database changes.
+ */
+export const syncSessionUserAction = async (data: {
+  name?: string;
+  avatarUrl?: string | null;
+  phone?: string | null;
+}): Promise<void> => {
+  await requireAuth();
+  await updateServerSessionUser(data);
+  revalidatePath("/", "layout");
+};
 
 /**
  * Server action to update customer personal profile details.
@@ -103,6 +118,8 @@ export const updateProfileAction = async (
       avatarFile.name !== "undefined" &&
       avatarFile.name !== "";
 
+    let updatedProfile: CustomerProfile | null = null;
+
     await withTokenRetry(async (token) => {
       if (hasValidFile) {
         // Build multipart FormData for direct Cloudinary upload via backend
@@ -113,10 +130,10 @@ export const updateProfileAction = async (
         if (phone) uploadData.append("phone", phone);
         uploadData.append("avatar", avatarFile);
 
-        await updateCustomerProfileWithFormData(token, uploadData);
+        updatedProfile = await updateCustomerProfileWithFormData(token, uploadData);
       } else {
         // JSON update
-        await updateCustomerProfile(token, {
+        updatedProfile = await updateCustomerProfile(token, {
           firstName,
           lastName,
           email,
@@ -126,8 +143,18 @@ export const updateProfileAction = async (
       }
     });
 
+    // Update the NextAuth encrypted session cookie with the new name, picture, and phone
+    if (updatedProfile) {
+      await updateServerSessionUser({
+        name: (updatedProfile as CustomerProfile).name,
+        avatarUrl: (updatedProfile as CustomerProfile).avatarUrl,
+        phone: (updatedProfile as CustomerProfile).phone,
+      });
+    }
+
     revalidatePath("/account/profile");
     revalidatePath("/account");
+    revalidatePath("/", "layout");
 
     return {
       success: true,

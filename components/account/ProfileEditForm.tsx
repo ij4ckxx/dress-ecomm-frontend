@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useRef, useActionState } from "react";
+import React, { useState, useRef, useEffect, useActionState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import gsap from "gsap";
-import { updateProfileAction } from "@/app/actions/customer.actions";
+import { updateProfileAction, syncSessionUserAction } from "@/app/actions/customer.actions";
 import { ActionState } from "@/lib/auth/types";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils/cn";
@@ -31,6 +32,25 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ user }) => {
     updateProfileAction,
     null
   );
+  const router = useRouter();
+
+  // Sync fresh profile details to session on initial mount if available from backend
+  useEffect(() => {
+    if (user.avatarUrl || user.name) {
+      syncSessionUserAction({
+        name: user.name || undefined,
+        avatarUrl: user.avatarUrl || undefined,
+        phone: user.phone || undefined,
+      });
+    }
+  }, [user.avatarUrl, user.name, user.phone]);
+
+  // Refresh router cache when profile is successfully saved so Header and Layout reflect changes immediately
+  useEffect(() => {
+    if (state?.success) {
+      router.refresh();
+    }
+  }, [state?.success, router]);
 
   // Split name for backend firstName & lastName validation
   const nameParts = (user.name || "").trim().split(/\s+/);

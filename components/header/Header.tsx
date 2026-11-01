@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { HeaderProps } from "./types";
 import { HeaderTopBar } from "./HeaderTopBar";
 import { HeaderNav } from "./HeaderNav";
@@ -22,13 +22,21 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const handleMobileMenuToggle = useCallback(() => {
+    setMobileMenuOpen((prev) => !prev);
+  }, []);
+
+  const handleMobileMenuClose = useCallback(() => {
+    setMobileMenuOpen(false);
+  }, []);
+
   return (
     <header className={`sticky top-0 z-40 w-full transition-shadow ${className}`}>
       {/* 1. Top Tier: Logo, Full-width Search, Concierge, Account, Cart */}
       <HeaderTopBar
         currentUser={currentUser}
         isMobileMenuOpen={mobileMenuOpen}
-        onMobileMenuToggle={() => setMobileMenuOpen((prev) => !prev)}
+        onMobileMenuToggle={handleMobileMenuToggle}
       />
 
       {/* 2. Bottom Tier: First 5 Categories (Left) & Highlights (Right) + Mega Menu */}
@@ -37,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* 3. Mobile Navigation Drawer */}
       <MobileHeaderNav
         isOpen={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
+        onClose={handleMobileMenuClose}
         currentUser={currentUser}
         categories={categories}
       />
