@@ -10,6 +10,7 @@ import { CategorySortBar } from "./CategorySortBar";
 import { CategoryFilterSidebar } from "./CategoryFilterSidebar";
 import { CategoryProductCard } from "./CategoryProductCard";
 import { Pagination } from "@/components/ui/Pagination";
+import { ProductCarousel } from "@/components/product/ProductCarousel";
 
 interface CategoryPLPViewProps {
   title: string;
@@ -255,36 +256,14 @@ export const CategoryPLPView: React.FC<CategoryPLPViewProps> = ({
           </main>
         </div>
 
-        {/* 3. Recommended Products ("You May Also Adore") Section */}
-        {recommendedProducts && recommendedProducts.length > 0 && (
-          <section
-            aria-label="Recommended Products"
-            className="pt-12 sm:pt-16 mt-8 sm:mt-12 border-t border-border"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-3">
-              <div>
-                <span className="text-[11px] uppercase tracking-[0.25em] font-bold text-accent font-sans">
-                  Curated For You
-                </span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-text-main mt-1 tracking-tight">
-                  You May Also Adore
-                </h2>
-              </div>
-              <p className="text-xs text-text-subtle font-sans max-w-sm">
-                Artisanal hand-crafted creations and timeless silhouettes selected to complement your style.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              {recommendedProducts.map((recProduct) => (
-                <CategoryProductCard
-                  key={`rec-${recProduct.id}`}
-                  product={recProduct}
-                />
-              ))}
-            </div>
-          </section>
-        )}
+        {/* 3. Recommended Products ("You May Also Adore") Carousel */}
+        <ProductCarousel
+          title="You May Also Adore"
+          subtitle="Artisanal hand-crafted creations and timeless silhouettes selected to complement your personal wardrobe."
+          eyebrow="Curated For You"
+          products={recommendedProducts}
+          categorySlug={activeSlug || undefined}
+        />
       </div>
     </div>
   );

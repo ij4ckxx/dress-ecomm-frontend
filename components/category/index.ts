@@ -4,6 +4,7 @@ export { CategoryFilterSidebar } from "./CategoryFilterSidebar";
 export { CategorySortBar } from "./CategorySortBar";
 export { CategoryPLPView } from "./CategoryPLPView";
 export { CatalogSkeleton } from "./CatalogSkeleton";
+export { ProductCarousel } from "../product/ProductCarousel";
 export { CategoryCard } from "./CategoryCard";
 export { CategoryFilterTabs } from "./CategoryFilterTabs";
 export { CategoryMegaMenu } from "./CategoryMegaMenu";

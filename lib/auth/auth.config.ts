@@ -86,8 +86,8 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     /**
      * Server-side JWT callback managing user session and backend token initialization.
-     * Note: Token rotation is handled in Middleware (`proxy.ts`), Server Actions (`getServerAccessToken`),
-     * and the `/api/auth/refresh` route where cookies can be safely persisted to the browser.
+     * Note: Token rotation is handled strictly on the server side in Middleware (`proxy.ts`)
+     * and Server Actions (`getServerAccessToken`) where cookies can be safely persisted to the browser.
      * Auto-refresh is omitted here to prevent desynchronization in read-only Server Component renders.
      */
     async jwt({ token, user, account }) {
