@@ -733,9 +733,9 @@ export const CategoryFilterSidebar: React.FC<CategoryFilterSidebarProps> = ({
 
   return (
     <>
-      {/* Desktop Sidebar Column */}
-      <aside className={`hidden lg:block w-64 shrink-0 ${className}`}>
-        <div className="sticky top-28 bg-surface-card border border-border/80 rounded-xl p-5 shadow-xs max-h-[calc(100vh-8rem)] overflow-y-auto">
+      {/* Desktop Sidebar Column (Sticky with viewport-aware scroll) */}
+      <aside className={`hidden lg:block w-64 shrink-0 sticky top-24 self-start z-10 ${className}`}>
+        <div className="bg-surface-card border border-border/80 rounded-2xl p-5 shadow-xs max-h-[calc(100vh-7rem)] overflow-y-auto overscroll-contain pr-2 space-y-5">
           {sidebarContent}
         </div>
       </aside>

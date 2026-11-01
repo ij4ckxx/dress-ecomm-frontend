@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
+import gsap from "gsap";
 import { ProductCardItem, CatalogFilters, PaginationMeta } from "@/lib/types/product";
 import { CategoryItem } from "@/lib/types/category";
 import { CategorySortBar } from "./CategorySortBar";
@@ -52,6 +53,41 @@ export const CategoryPLPView: React.FC<CategoryPLPViewProps> = ({
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * GSAP entrance animation for category product cards
+   */
+  useEffect(() => {
+    if (!gridRef.current) return;
+
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    const ctx = gsap.context(() => {
+      const cards = gridRef.current?.querySelectorAll("article");
+      if (cards && cards.length > 0) {
+        gsap.fromTo(
+          cards,
+          { opacity: 0, y: 20 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.45,
+            stagger: 0.04,
+            ease: "power2.out",
+            clearProps: "transform",
+          }
+        );
+      }
+    }, gridRef);
+
+    return () => ctx.revert();
+  }, [products, activeSlug]);
 
   /**
    * Generates pagination link href preserving existing active query parameters
@@ -199,7 +235,10 @@ export const CategoryPLPView: React.FC<CategoryPLPViewProps> = ({
           {/* Product Cards Grid & Pagination */}
           <main className="flex-1 min-w-0 space-y-10">
             {products.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              <div
+                ref={gridRef}
+                className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
+              >
                 {products.map((product, idx) => (
                   <CategoryProductCard
                     key={product.id}

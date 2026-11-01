@@ -144,19 +144,52 @@ export const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
       ref={cardRef}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group flex flex-col bg-surface-card border border-border/80 hover:border-border rounded-xl p-3.5 transition-all duration-300 hover:shadow-lg relative overflow-hidden"
+      className="group flex flex-col bg-surface-card border border-border/70 hover:border-accent/40 rounded-2xl p-3 sm:p-3.5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative overflow-hidden"
     >
-      {/* 1. Card Top Bar: Only genuine discount badge */}
-      {hasDiscount && (
-        <div className="flex items-center justify-end pb-1.5 text-xs">
-          <span className="px-1.5 py-0.5 rounded-sm bg-accent/10 text-accent font-sans text-[10px] font-bold tracking-tight">
-            Save {product.price.discountPercentage}%
-          </span>
-        </div>
-      )}
+      {/* 1. Product Visual Container with Floating Badges & Wishlist Button */}
+      <div className="relative aspect-[3/4] w-full bg-surface-soft rounded-xl overflow-hidden mb-2">
+        {/* Floating Discount Pill (Single occurrence, directly over image) */}
+        {hasDiscount && (
+          <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-accent text-primary-contrast font-sans text-[10px] font-bold tracking-wider uppercase shadow-xs backdrop-blur-xs">
+              Save {product.price.discountPercentage}%
+            </span>
+          </div>
+        )}
 
-      {/* 2. Product Visual Container with Image Hover Animation & Wishlist Button */}
-      <div className="relative aspect-[3/4] w-full bg-surface-soft rounded-lg overflow-hidden my-1">
+        {/* Floating Wishlist Heart Icon */}
+        <button
+          ref={heartRef}
+          type="button"
+          onClick={handleWishlistToggle}
+          disabled={isWishlistPending}
+          aria-label={
+            isWishlisted
+              ? `Remove ${product.name} from wishlist`
+              : `Save ${product.name} to wishlist`
+          }
+          className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md shadow-xs transition-all duration-200 z-10 focus-ring ${
+            isWishlisted
+              ? "bg-white text-error scale-105"
+              : "bg-white/85 hover:bg-white text-text-subtle hover:text-text-main hover:scale-105"
+          }`}
+        >
+          <svg
+            className={`w-4 h-4 transition-colors ${
+              isWishlisted ? "fill-error text-error" : "fill-none"
+            }`}
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.75}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+            />
+          </svg>
+        </button>
+
         <Link
           href={`/product/${product.slug}`}
           className="block w-full h-full relative focus-ring"
@@ -195,44 +228,11 @@ export const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
             />
           )}
         </Link>
-
-        {/* Floating Wishlist Heart Icon */}
-        <button
-          ref={heartRef}
-          type="button"
-          onClick={handleWishlistToggle}
-          disabled={isWishlistPending}
-          aria-label={
-            isWishlisted
-              ? `Remove ${product.name} from wishlist`
-              : `Save ${product.name} to wishlist`
-          }
-          className={`absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md shadow-xs transition-all duration-200 z-10 focus-ring ${
-            isWishlisted
-              ? "bg-white text-error"
-              : "bg-white/85 hover:bg-white text-text-subtle hover:text-text-main"
-          }`}
-        >
-          <svg
-            className={`w-4 h-4 transition-colors ${
-              isWishlisted ? "fill-error text-error" : "fill-none"
-            }`}
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.75}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-            />
-          </svg>
-        </button>
       </div>
 
-      {/* 3. Color Swatch Dots (Render only if colors actually exist in backend) */}
+      {/* 2. Color Swatch Dots */}
       {visibleColors.length > 0 && (
-        <div className="pt-2 pb-1 flex items-center gap-1.5 min-h-[24px]">
+        <div className="pt-1.5 pb-1 flex items-center gap-1.5 min-h-[26px]">
           {visibleColors.map((color) => {
             const hex = COLOR_HEX_MAP[color.slug] || "#CCCCCC";
             const isSelected = selectedColor === color.slug;
@@ -244,10 +244,10 @@ export const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
                 onClick={() => setSelectedColor(color.slug)}
                 title={color.name}
                 aria-label={`Select color ${color.name}`}
-                className={`w-3.5 h-3.5 rounded-full border transition-all duration-200 relative ${
+                className={`w-4 h-4 rounded-full border border-black/15 transition-all duration-200 shadow-2xs relative ${
                   isSelected
-                    ? "ring-2 ring-primary ring-offset-1 scale-110 border-white"
-                    : "border-border/80 hover:scale-105"
+                    ? "ring-2 ring-primary ring-offset-2 scale-110"
+                    : "hover:scale-115 opacity-85 hover:opacity-100"
                 }`}
                 style={{ backgroundColor: hex }}
               />
@@ -261,41 +261,36 @@ export const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
         </div>
       )}
 
-      {/* 4. Brand Name & Product Title */}
+      {/* 3. Brand Name & Product Title */}
       <div className="flex flex-col flex-1 pt-1">
         {product.brand && (
-          <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-text-subtle line-clamp-1 mb-0.5">
+          <span className="text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-[0.16em] text-text-subtle line-clamp-1 mb-1">
             {product.brand}
           </span>
         )}
 
-        <h3 className="font-serif text-sm font-medium text-text-main line-clamp-2 leading-snug group-hover:text-primary transition-colors mb-2">
+        <h3 className="font-serif text-sm sm:text-base font-semibold text-text-main line-clamp-2 leading-snug group-hover:text-primary transition-colors mb-2">
           <Link href={`/product/${product.slug}`} className="focus-ring">
             {product.name}
           </Link>
         </h3>
 
-        {/* 5. Pricing Row */}
-        <div className="mt-auto pt-1 flex items-baseline gap-2">
-          <span className="text-sm sm:text-base font-bold font-sans text-text-main tracking-tight">
+        {/* 4. Pricing Row (Effective price and strikethrough only - discount pill is floating) */}
+        <div className="mt-auto pt-1.5 flex items-baseline gap-2">
+          <span className="text-base sm:text-lg font-bold font-sans text-text-main tracking-tight">
             {formatPrice(product.price.effective)}
           </span>
           {hasDiscount && (
-            <span className="text-xs font-sans text-text-subtle line-through">
+            <span className="text-xs sm:text-sm font-sans text-text-subtle line-through opacity-70">
               {formatPrice(product.price.regular)}
-            </span>
-          )}
-          {hasDiscount && (
-            <span className="text-xs font-sans font-semibold text-accent">
-              Save {product.price.discountPercentage}%
             </span>
           )}
         </div>
 
-        {/* 6. Ratings & Reviews (Only shown if genuinely present from backend) */}
+        {/* 5. Ratings & Reviews */}
         {hasRating && (
           <div className="pt-1.5 flex items-center gap-1 text-[11px] text-text-subtle">
-            <span className="text-accent text-xs">★</span>
+            <span className="text-amber-500 text-xs">★</span>
             <span className="font-medium text-text-main">
               {product.rating!.toFixed(1)}
             </span>
@@ -307,12 +302,12 @@ export const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
           </div>
         )}
 
-        {/* 7. Action Button (Select Options vs Add to Cart) */}
+        {/* 6. Action Button (Select Options vs Add to Cart) */}
         <div className="pt-3 mt-1">
           {product.requiresConfiguration ? (
             <Link
               href={`/product/${product.slug}`}
-              className="w-full py-2 px-3 rounded-lg border border-primary text-primary hover:bg-primary hover:text-primary-contrast transition-all duration-200 text-xs font-semibold uppercase tracking-wider text-center flex items-center justify-center gap-1.5 focus-ring"
+              className="w-full py-2.5 px-3 rounded-xl border border-primary text-primary hover:bg-primary hover:text-primary-contrast transition-all duration-200 text-xs font-semibold uppercase tracking-wider text-center flex items-center justify-center gap-1.5 focus-ring"
             >
               <span>Select Options</span>
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -324,7 +319,7 @@ export const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
               type="button"
               onClick={handleQuickAddToCart}
               disabled={isCartPending}
-              className={`w-full py-2 px-3 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 focus-ring ${
+              className={`w-full py-2.5 px-3 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 focus-ring ${
                 addedStatus === "success"
                   ? "bg-success text-white"
                   : addedStatus === "error"
