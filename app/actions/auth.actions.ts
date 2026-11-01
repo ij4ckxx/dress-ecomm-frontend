@@ -1,6 +1,7 @@
 "use server";
 
 import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/lib/auth";
 import {
   forgotPasswordSchema,
@@ -194,12 +195,13 @@ export const resetPasswordAction = async (
  * Server action to log out the user and clear session cookies.
  */
 export const logoutAction = async (): Promise<void> => {
-  await signOut({ redirectTo: "/login" });
+  await signOut({ redirect: false });
+  redirect("/login");
 };
 
 /**
  * Server action to initiate Google OAuth sign-in.
  */
 export const initiateGoogleSignInAction = async (): Promise<void> => {
-  await signIn("google", { redirectTo: "/account/profile" });
+  await signIn("google", { redirectTo: "/account" });
 };

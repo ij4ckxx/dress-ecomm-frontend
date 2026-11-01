@@ -25,7 +25,7 @@ const RegisterFormSkeleton = () => (
 export default async function RegisterPage() {
   const currentUser = await getCurrentUser();
   if (currentUser) {
-    redirect("/account/profile");
+    redirect("/account");
   }
 
   return (

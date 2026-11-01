@@ -17,7 +17,7 @@ export interface LoginFormProps {
  * animated lightning shooting star border inputs, and luxury aesthetic.
  */
 export const LoginForm: React.FC<LoginFormProps> = ({
-  redirectUrl = "/account/profile",
+  redirectUrl = "/account",
 }) => {
   const router = useRouter();
 

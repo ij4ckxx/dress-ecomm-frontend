@@ -24,7 +24,7 @@ const LoginFormSkeleton = () => (
 export default async function LoginPage() {
   const currentUser = await getCurrentUser();
   if (currentUser) {
-    redirect("/account/profile");
+    redirect("/account");
   }
 
   return (
